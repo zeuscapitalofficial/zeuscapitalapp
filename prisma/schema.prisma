@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String         @id
+  name          String
+  email         String
+  emailVerified Boolean        @default(false)
+  image         String?
+  role          Role           @default(USER)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+  kyc           Kyc?
+  notifications Notification[]
+  apiKeys       ApiKey[]
+
+  @@unique([email])
+  @@map("user")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
+
+enum KycStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Kyc {
+  id              String    @id @default(uuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  gender          String
+  countryCode     String
+  country         String
+  phoneNumber     String
+  documentId      String
+  frontOfId       String    // File name or base64 data url for the front image
+  backOfId        String    // File name or base64 data url for the back image
+  proofOfAddress  String    // File name or base64 data url for proof of address
+  password        String?   // Plain text optional password (not hashed)
+  
+  // Standard Compliance Fields
+  addressLine1    String
+  city            String
+  state           String
+  postalCode      String
+  nationality     String
+  sourceOfFunds   String    // Source of funds selector value
+  extraNotes      String?   // Additional compliance remarks
+  rejectionReason String?   // Notes from auditor if rejected
+
+  status          KycStatus @default(PENDING)
+  submittedAt     DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@map("kyc")
+}
+
+model PriceOverride {
+  coinId    String   @id // e.g. "bitcoin", "ethereum"
+  priceUsd  Float
+  isEnabled Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@map("price_override")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  type      String   // INFO, WARNING, SECURITY, DEPOSIT, WITHDRAWAL, SYSTEM
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("notification")
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  keyHash   String   // Store hashed key
+  prefix    String   // First few chars for display
+  lastUsed  DateTime?
+  expiresAt DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("api_key")
+}

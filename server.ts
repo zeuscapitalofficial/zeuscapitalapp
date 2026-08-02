@@ -6,32 +6,59 @@ import { Server as SocketIOServer } from "socket.io";
 import prisma from "./lib/prisma.js";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = process.env.HOSTNAME ?? (dev ? "localhost" : "0.0.0.0");
+const hostname = process.env.HOST ?? process.env.HOSTNAME ?? (dev ? "localhost" : "0.0.0.0");
 const port = Number(process.env.PORT ?? 3000);
 
 const app = next({ dev, hostname, port });
 const handle = app.getRequestHandler();
 
-app.prepare().then(() => {
-  const httpServer = createServer(async (req, res) => {
-    const parsedUrl = parse(req.url ?? "/", true);
-    await handle(req, res, parsedUrl);
-  });
+const startServer = async () => {
+  try {
+    await app.prepare();
 
-  const allowedOrigins = process.env.CORS_ORIGIN?.split(",").map((value) => value.trim()).filter(Boolean) ?? ["*"];
+    const httpServer = createServer(async (req, res) => {
+      const parsedUrl = parse(req.url ?? "/", true);
+      await handle(req, res, parsedUrl);
+    });
 
-  const io = new SocketIOServer(httpServer, {
-    path: "/api/socket",
-    addTrailingSlash: false,
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    cors: {
-      origin: allowedOrigins,
-      methods: ["GET", "POST"],
-    },
-  });
+    const allowedOrigins = process.env.CORS_ORIGIN?.split(",").map((value) => value.trim()).filter(Boolean) ?? ["*"];
 
-  io.on("connection", (socket) => {
+    const io = new SocketIOServer(httpServer, {
+      path: "/api/socket",
+      addTrailingSlash: false,
+      pingTimeout: 60000,
+      pingInterval: 25000,
+      cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"],
+      },
+    });
+
+    const shutdown = async (signal: NodeJS.Signals) => {
+      console.log(`[server] Received ${signal}, shutting down gracefully`);
+      if (httpServer.listening) {
+        await new Promise<void>((resolve, reject) => {
+          httpServer.close((error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        });
+      }
+      process.exit(0);
+    };
+
+    process.on("SIGTERM", () => {
+      void shutdown("SIGTERM");
+    });
+
+    process.on("SIGINT", () => {
+      void shutdown("SIGINT");
+    });
+
+    io.on("connection", (socket) => {
     console.log(`[Socket] Client connected: ${socket.id}`);
 
     // ── Authentication ──
@@ -222,7 +249,13 @@ app.prepare().then(() => {
     });
   });
 
-  httpServer.listen(port, hostname, () => {
-    console.log(`> Ready on http://${hostname}:${port}`);
-  });
-});
+    httpServer.listen(port, hostname, () => {
+      console.log(`> Ready on http://${hostname}:${port}`);
+    });
+  } catch (error) {
+    console.error("[server] Failed to start:", error);
+    process.exit(1);
+  }
+};
+
+void startServer();

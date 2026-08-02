@@ -28,11 +28,14 @@ export function Navbar() {
         </div>
         <div className="hidden items-center gap-2 md:flex">
           <ThemeDropdownToggle />
-          <Button variant="outline">
-            <Link href="/sign-in">Sign In</Link>
-          </Button>
-          <Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground" render={}
-          </Button>
+          <Button
+            variant="outline"
+            render={<Link href="/sign-in">Sign In</Link>}
+          />
+          <Button
+            className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground"
+            render={<Link href="/sign-up">Get Started</Link>}
+          />
         </div>
         <MobileNav />
       </nav>

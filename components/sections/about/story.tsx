@@ -7,7 +7,7 @@ export function AboutStorySection() {
           <span className="text-[13px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.4)]">
             The Narrative
           </span>
-          <h2 className="text-[40px] sm:text-[56px] font-semibold tracking-[-0.03em] leading-tight text-black">
+          <h2 className="text-[40px] sm:text-[56px] font-serif italic tracking-[-0.03em] leading-tight text-black">
             Why we built
             <br /> Zeus Capital.
           </h2>

@@ -10,24 +10,54 @@ export async function GET() {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Generate referral code from user ID
-    const referralCode = `ZC${session.user.id.slice(0, 8).toUpperCase()}`;
+    let dbUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        referralCode: true,
+        bonusRewards: true,
+        _count: {
+          select: { referrals: true },
+        },
+      },
+    });
 
-    // In production, query actual referral stats from database
+    if (!dbUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    // Ensure user has a valid referralCode in DB
+    let code = dbUser.referralCode;
+    if (!code) {
+      code = `zc-${session.user.id.slice(0, 6)}`;
+      dbUser = await prisma.user.update({
+        where: { id: session.user.id },
+        data: { referralCode: code },
+        select: {
+          id: true,
+          referralCode: true,
+          bonusRewards: true,
+          _count: {
+            select: { referrals: true },
+          },
+        },
+      });
+    }
+
+    const totalReferrals = dbUser._count.referrals;
+    const totalEarnings = dbUser.bonusRewards ?? 0;
+
     return NextResponse.json({
       stats: {
-        code: referralCode,
-        totalReferrals: 0,
-        activeReferrals: 0,
-        totalEarnings: 0,
+        code,
+        totalReferrals,
+        activeReferrals: totalReferrals,
+        totalEarnings,
         pendingEarnings: 0,
-        thisMonthEarnings: 0,
+        thisMonthEarnings: totalEarnings,
       },
     });
   } catch (error: any) {

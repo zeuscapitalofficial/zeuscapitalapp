@@ -3,11 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AlertTriangle,
-  CheckCircle,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  FileText,
   HelpCircle,
+  Info,
   Loader2,
+  ShieldAlert,
   ShieldCheck,
   Upload,
   X,
@@ -16,10 +19,21 @@ import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
+
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import {
   Select,
   SelectContent,
@@ -27,6 +41,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Zod Schema matching Kyc Database Model
 const kycSchema = z.object({
@@ -50,8 +73,78 @@ const kycSchema = z.object({
 
 type KycFormValues = z.infer<typeof kycSchema>;
 
+interface UploadCardProps {
+  label: string;
+  fileName: string;
+  base64: string | null;
+  onSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onClear: () => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}
+
+function DocumentUploadCard({
+  label,
+  fileName,
+  base64,
+  onSelect,
+  onClear,
+  inputRef,
+}: UploadCardProps) {
+  return (
+    <Card className="border-dashed border-2 border-border hover:border-accent-foreground/50 transition-colors p-md flex flex-col items-center justify-center text-center gap-sm bg-muted/20 rounded-[16px]">
+      <input
+        type="file"
+        accept="image/*"
+        ref={inputRef}
+        onChange={onSelect}
+        className="hidden"
+      />
+
+      {base64 ? (
+        <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border group">
+          <img
+            src={base64}
+            alt={label}
+            className="w-full h-full object-cover"
+          />
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon"
+            onClick={onClear}
+            className="absolute top-1 right-1 h-6 w-6 rounded-full opacity-80 group-hover:opacity-100 transition-opacity"
+          >
+            <X className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      ) : (
+        <div
+          onClick={() => inputRef.current?.click()}
+          className="cursor-pointer flex flex-col items-center justify-center gap-2 py-4 w-full"
+        >
+          <div className="p-3 rounded-full bg-accent-foreground/10 text-accent-foreground">
+            <Upload className="w-5 h-5" />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-xs font-semibold text-foreground">{label}</p>
+            <p className="text-[11px] text-muted-foreground">
+              PNG, JPG up to 10MB
+            </p>
+          </div>
+        </div>
+      )}
+
+      {fileName !== "No file chosen" && (
+        <Badge variant="outline" className="text-[10px] max-w-[160px] truncate">
+          <FileText className="w-3 h-3 mr-1" /> {fileName}
+        </Badge>
+      )}
+    </Card>
+  );
+}
+
 export default function KycPage() {
-  const [kycStatus, setKycStatus] = useState<string>("NONE"); // NONE, PENDING, APPROVED, REJECTED
+  const [kycStatus, setKycStatus] = useState<string>("NONE");
   const [rejectionReason, setRejectionReason] = useState<string | null>(null);
   const [loadingStatus, setLoadingStatus] = useState(true);
 
@@ -244,803 +337,503 @@ export default function KycPage() {
   };
 
   return (
-    <div className="flex flex-col gap-lg select-none font-sans text-white bg-[#09090B] min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-[rgba(255,255,255,0.06)] pb-lg">
-        <div className="flex flex-col gap-2">
-          <span className="text-[12px] font-semibold text-zinc-400 uppercase tracking-wider">
-            Identity & Compliance
-          </span>
-          <h1 className="text-[32px] md:text-[36px] font-semibold tracking-[-0.03em] leading-tight text-white animate-fade-in">
+    <TooltipProvider>
+      <div className="flex flex-col gap-lg select-none font-sans text-foreground min-h-screen pb-xl">
+        {/* Header */}
+        <div className="flex flex-col gap-sm pb-sm">
+          <h1 className="text-[32px] md:text-[40px] font-semibold tracking-tight leading-tight text-foreground">
             KYC Verification
           </h1>
-          <p className="text-[15px] text-zinc-400 font-medium">
-            Verify profile parameters to lift limits, verify mining arrays, and
-            activate ledger withdrawals.
-          </p>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-start mt-xs">
-        {/* Verification Form Container (8 cols) */}
-        <div className="lg:col-span-8 flex flex-col gap-md">
-          {loadingStatus ? (
-            // Status loading indicator skeleton
-            <Card
-              variant="flat"
-              className="p-xl bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] text-center flex flex-col items-center gap-md py-xxl animate-pulse"
-            >
-              <Loader2 className="w-10 h-10 text-[#8B7CFF] animate-spin" />
-              <span className="text-zinc-400 text-sm">
-                Querying compliance ledger database...
-              </span>
-            </Card>
-          ) : kycStatus === "APPROVED" ? (
-            // Confirmed approved state
-            <Card
-              variant="flat"
-              className="p-xl bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] text-center flex flex-col items-center gap-md py-xxl animate-fade-in"
-            >
-              <CheckCircle className="w-16 h-16 text-[#22C55E]" />
-              <div className="flex flex-col gap-2 max-w-[460px]">
-                <h3 className="text-[22px] font-semibold text-white">
-                  Identity Confirmed
-                </h3>
-                <p className="text-[14px] text-zinc-400 leading-relaxed mt-1">
-                  Your identity verification request has been successfully
-                  reviewed and approved. Staking contracts, ASIC miners
-                  purchase, and ledger withdrawal channels are fully unlocked.
-                </p>
-              </div>
-              <div className="mt-xs inline-flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-[10px] text-[12px] font-bold text-green-400 uppercase tracking-wider">
-                Status: Account Verified
-              </div>
-            </Card>
-          ) : kycStatus === "PENDING" ? (
-            // Pending State
-            <Card
-              variant="flat"
-              className="p-xl bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] text-center flex flex-col items-center gap-md py-xxl animate-fade-in"
-            >
-              <Loader2 className="w-16 h-16 text-[#8B7CFF] animate-spin" />
-              <div className="flex flex-col gap-2 max-w-[420px]">
-                <h3 className="text-[20px] font-semibold text-white">
-                  Verification Pending
-                </h3>
-                <p className="text-[14px] text-zinc-400 leading-relaxed mt-1">
-                  Your KYC profile details have been saved to our database.
-                  Compliance reviews take 2-4 hours to verify accounts.
-                </p>
-              </div>
-              <div className="p-md bg-[#09090B] border border-[rgba(255,255,255,0.04)] rounded-[14px] text-[13px] font-semibold text-zinc-400">
-                Status: Pending Approval
-              </div>
-            </Card>
-          ) : kycStatus === "REJECTED" ? (
-            // Rejected Error State
-            <Card
-              variant="flat"
-              className="p-xl bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] text-center flex flex-col items-center gap-md py-xl animate-fade-in"
-            >
-              <AlertTriangle className="w-16 h-16 text-[#EF4444]" />
-              <div className="flex flex-col gap-2 max-w-[480px]">
-                <h3 className="text-[22px] font-semibold text-white">
-                  Verification Rejected
-                </h3>
-                <p className="text-[14px] text-zinc-400 leading-relaxed mt-1">
-                  Compliance auditors rejected your KYC request due to
-                  validation errors. Review the failure reason below and
-                  re-submit details.
-                </p>
-              </div>
-
-              {rejectionReason && (
-                <div className="w-full max-w-[480px] p-md bg-red-500/5 border border-red-500/10 rounded-[14px] text-left">
-                  <span className="text-[11px] font-semibold text-red-400 uppercase tracking-wider block">
-                    Auditor Rejection Reason:
-                  </span>
-                  <span className="text-[13px] text-zinc-300 font-medium block mt-1 leading-relaxed">
-                    {rejectionReason}
-                  </span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-start mt-xs">
+          {/* Main Form / Status Container (8 cols) */}
+          <div className="lg:col-span-8 flex flex-col gap-md">
+            {loadingStatus ? (
+              <Card className="p-xl flex flex-col items-center justify-center gap-md text-center rounded-[20px]">
+                <Skeleton className="h-12 w-12 rounded-full" />
+                <div className="space-y-2">
+                  <Skeleton className="h-5 w-48 mx-auto" />
+                  <Skeleton className="h-4 w-64 mx-auto" />
                 </div>
-              )}
-
-              <Button
-                onClick={handleResetKycForm}
-                className="bg-[#8B7CFF] hover:bg-[#7A6BEA] text-white text-[13px] font-semibold h-10 rounded-[12px] px-lg flex items-center gap-xs mt-sm transition-colors cursor-pointer"
-              >
-                Re-submit Documents
-              </Button>
-            </Card>
-          ) : (
-            // Form wizard container (NONE status)
-            <Card
-              variant="flat"
-              className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-            >
-              <div className="border-b border-[rgba(255,255,255,0.06)] pb-md flex flex-col sm:flex-row sm:items-center justify-between gap-md">
-                <div className="flex flex-col gap-xs">
-                  <h3 className="text-[18px] font-semibold text-white">
-                    {currentStep === 1 && "Personal Information"}
-                    {currentStep === 2 && "Residential & Funds"}
-                    {currentStep === 3 && "Document Verification"}
+              </Card>
+            ) : kycStatus === "APPROVED" ? (
+              <Card className="border-emerald-500/30 bg-emerald-500/5 p-xl text-center flex flex-col items-center gap-md rounded-[20px]">
+                <div className="rounded-full bg-emerald-500/10 p-3 text-emerald-500">
+                  <CheckCircle2 className="w-12 h-12" />
+                </div>
+                <div className="space-y-1 w-108">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    Identity Verified
                   </h3>
-                  <p className="text-[13px] text-zinc-400 font-medium">
-                    {currentStep === 1 && "Enter your basic profile parameters"}
-                    {currentStep === 2 &&
-                      "Provide your residential address and income details"}
-                    {currentStep === 3 &&
-                      "Upload official legal files to confirm credentials"}
+                  <p className="text-sm text-muted-foreground">
+                    Your compliance details have been audited and approved. Staking contracts, ASIC miners purchase, and withdrawal channels are fully unlocked.
+                  </p>
+                </div>
+                <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-500">
+                  <ShieldCheck className="w-3.5 h-3.5 mr-1" /> Account Status: Level 3 Verified
+                </Badge>
+              </Card>
+            ) : kycStatus === "PENDING" ? (
+              <Card className="p-xl text-center flex flex-col items-center gap-md rounded-[20px]">
+                <div className="rounded-full bg-accent-foreground/10 p-3 text-accent-foreground">
+                  <Loader2 className="w-12 h-12 animate-spin" />
+                </div>
+                <div className="space-y-1 w-108">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    Review Pending
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your documents were received and are undergoing compliance checks. Reviews typically take 2-4 hours.
+                  </p>
+                </div>
+                <Badge variant="secondary" className="px-3 py-1">
+                  Status: Under Review
+                </Badge>
+              </Card>
+            ) : kycStatus === "REJECTED" ? (
+              <Card className="border-destructive/30 bg-destructive/5 p-xl text-center flex flex-col items-center gap-md rounded-[20px]">
+                <div className="rounded-full bg-destructive/10 p-3 text-destructive">
+                  <AlertTriangle className="w-12 h-12" />
+                </div>
+                <div className="space-y-1 w-108">
+                  <h3 className="text-xl font-semibold text-foreground">
+                    Verification Rejected
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Your submission requires correction. Review the failure reason below and re-submit details.
                   </p>
                 </div>
 
-                {/* Steps Action Component */}
-                <div className="flex items-center gap-xs select-none shrink-0 bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px] p-1.5 mt-2 sm:mt-0">
-                  {[1, 2, 3].map((step) => {
-                    const isActive = currentStep === step;
-                    const isCompleted = currentStep > step;
-                    return (
-                      <div key={step} className="flex items-center gap-xs">
-                        <div
-                          className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[11px] transition-all ${
-                            isCompleted
-                              ? "bg-green-500/20 border border-green-500 text-green-400"
-                              : isActive
-                                ? "bg-[#8B7CFF] text-white shadow"
-                                : "bg-[#1D1D22] border border-[rgba(255,255,255,0.06)] text-zinc-500"
-                          }`}
-                        >
-                          {isCompleted ? "✓" : step}
+                {rejectionReason && (
+                  <Alert variant="destructive" className="w-108 text-left">
+                    <ShieldAlert className="h-4 w-4" />
+                    <AlertTitle className="text-xs font-semibold">Auditor Note</AlertTitle>
+                    <AlertDescription className="text-xs">{rejectionReason}</AlertDescription>
+                  </Alert>
+                )}
+
+                <Button onClick={handleResetKycForm} variant="default" className="mt-2 rounded-full px-lg">
+                  Re-submit Verification Form
+                </Button>
+              </Card>
+            ) : (
+              /* Active Form Wizard */
+              <Card className="border-border bg-card rounded-[24px]">
+                <CardHeader className="space-y-md pb-md">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-md">
+                    <div>
+                      <CardTitle className="text-xl font-semibold text-foreground">
+                        {currentStep === 1 && "Personal Information"}
+                        {currentStep === 2 && "Residential & Funds"}
+                        {currentStep === 3 && "Document Verification"}
+                      </CardTitle>
+                      <CardDescription className="text-xs text-muted-foreground">
+                        {currentStep === 1 && "Step 1 of 3: Enter basic identity details"}
+                        {currentStep === 2 && "Step 2 of 3: Provide legal residential address"}
+                        {currentStep === 3 && "Step 3 of 3: Upload identification and proof files"}
+                      </CardDescription>
+                    </div>
+
+                    <div className="flex items-center gap-xs">
+                      <Badge variant={currentStep >= 1 ? "default" : "outline"} className="text-[11px]">1. Profile</Badge>
+                      <Separator orientation="vertical" className="h-4" />
+                      <Badge variant={currentStep >= 2 ? "default" : "outline"} className="text-[11px]">2. Address</Badge>
+                      <Separator orientation="vertical" className="h-4" />
+                      <Badge variant={currentStep >= 3 ? "default" : "outline"} className="text-[11px]">3. Documents</Badge>
+                    </div>
+                  </div>
+
+                  <Progress value={(currentStep / 3) * 100} className="h-1.5" />
+                </CardHeader>
+
+                <Separator />
+
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <CardContent className="pt-lg space-y-md mb-5">
+                    {/* STEP 1: PERSONAL INFORMATION */}
+                    {currentStep === 1 && (
+                      <div className="space-y-md">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+                          <div className="space-y-xs">
+                            <Label htmlFor="fullname">Legal Full Name</Label>
+                            <Input
+                              id="fullname"
+                              placeholder="August Renner"
+                              {...register("fullname")}
+                            />
+                            {errors.fullname && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.fullname.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <Label htmlFor="gender">Gender</Label>
+                            <Controller
+                              name="gender"
+                              control={control}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger id="gender" className="w-full">
+                                    <SelectValue placeholder="Select gender" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="male">Male</SelectItem>
+                                    <SelectItem value="female">Female</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                            {errors.gender && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.gender.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <Label htmlFor="nationality">Nationality</Label>
+                            <Input
+                              id="nationality"
+                              placeholder="Canadian"
+                              {...register("nationality")}
+                            />
+                            {errors.nationality && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.nationality.message}
+                              </p>
+                            )}
+                          </div>
                         </div>
-                        {step < 3 && (
-                          <div
-                            className={`h-[1px] w-4 rounded-full transition-colors ${currentStep > step ? "bg-green-500" : "bg-[rgba(255,255,255,0.06)]"}`}
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+                          <div className="space-y-xs">
+                            <Label htmlFor="countryCode">Country Code</Label>
+                            <Input
+                              id="countryCode"
+                              placeholder="+1"
+                              {...register("countryCode")}
+                            />
+                            {errors.countryCode && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.countryCode.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <Label htmlFor="country">Country</Label>
+                            <Input
+                              id="country"
+                              placeholder="Canada"
+                              {...register("country")}
+                            />
+                            {errors.country && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.country.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <Label htmlFor="phoneNumber">Phone Number</Label>
+                            <Input
+                              id="phoneNumber"
+                              type="tel"
+                              placeholder="604-555-0199"
+                              {...register("phoneNumber")}
+                            />
+                            {errors.phoneNumber && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.phoneNumber.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 2: RESIDENTIAL & FUNDS */}
+                    {currentStep === 2 && (
+                      <div className="space-y-md">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+                          <div className="space-y-xs">
+                            <Label htmlFor="addressLine1">Street Address</Label>
+                            <Input
+                              id="addressLine1"
+                              placeholder="123 Alpha Wealth Blvd"
+                              {...register("addressLine1")}
+                            />
+                            {errors.addressLine1 && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.addressLine1.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <Label htmlFor="city">City</Label>
+                            <Input
+                              id="city"
+                              placeholder="Vancouver"
+                              {...register("city")}
+                            />
+                            {errors.city && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.city.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <Label htmlFor="state">State / Province</Label>
+                            <Input
+                              id="state"
+                              placeholder="BC"
+                              {...register("state")}
+                            />
+                            {errors.state && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.state.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
+                          <div className="space-y-xs">
+                            <Label htmlFor="postalCode">Postal Code</Label>
+                            <Input
+                              id="postalCode"
+                              placeholder="V6B 1A1"
+                              {...register("postalCode")}
+                            />
+                            {errors.postalCode && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.postalCode.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs sm:col-span-2">
+                            <Label htmlFor="sourceOfFunds">Source of Funds</Label>
+                            <Controller
+                              name="sourceOfFunds"
+                              control={control}
+                              render={({ field }) => (
+                                <Select
+                                  value={field.value}
+                                  onValueChange={field.onChange}
+                                >
+                                  <SelectTrigger id="sourceOfFunds" className="w-full">
+                                    <SelectValue placeholder="Select Source" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="salary">Salary / Wages</SelectItem>
+                                    <SelectItem value="investments">Investments / Trading</SelectItem>
+                                    <SelectItem value="mining">Mining Operations</SelectItem>
+                                    <SelectItem value="savings">Personal Savings</SelectItem>
+                                    <SelectItem value="other">Other</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              )}
+                            />
+                            {errors.sourceOfFunds && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.sourceOfFunds.message}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* STEP 3: DOCUMENT VERIFICATION */}
+                    {currentStep === 3 && (
+                      <div className="space-y-lg">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
+                          <div className="space-y-xs">
+                            <Label htmlFor="documentId">Document ID Number</Label>
+                            <Input
+                              id="documentId"
+                              placeholder="Passport / ID Number"
+                              {...register("documentId")}
+                            />
+                            {errors.documentId && (
+                              <p className="text-xs text-destructive font-medium">
+                                {errors.documentId.message}
+                              </p>
+                            )}
+                          </div>
+
+                          <div className="space-y-xs">
+                            <div className="flex items-center gap-1">
+                              <Label htmlFor="kycPassword">Verification Password (Optional)</Label>
+                              <Tooltip>
+                                <TooltipTrigger render={
+                                  <HelpCircle className="w-3.5 h-3.5 text-muted-foreground cursor-pointer" />}>
+                                </TooltipTrigger>
+                                <TooltipContent>Optional security passphrase for identity verification</TooltipContent>
+                              </Tooltip>
+                            </div>
+                            <Input
+                              id="kycPassword"
+                              placeholder="Optional security token"
+                              {...register("kycPassword")}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-xs">
+                          <Label htmlFor="extraNotes">Additional Notes (Optional)</Label>
+                          <Textarea
+                            id="extraNotes"
+                            rows={3}
+                            placeholder="Provide details about corporate assets or related accounts..."
+                            {...register("extraNotes")}
                           />
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+                        </div>
 
-              <form
-                className="flex flex-col gap-md"
-                onSubmit={handleSubmit(onSubmit)}
-              >
-                {/* STEP 1: PERSONAL INFORMATION */}
-                {currentStep === 1 && (
-                  <div className="flex flex-col gap-md animate-fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="fullname"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Legal Full Name
-                        </Label>
-                        <Input
-                          id="fullname"
-                          type="text"
-                          placeholder="August Renner"
-                          {...register("fullname")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.fullname && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.fullname.message}
-                          </span>
-                        )}
-                      </div>
+                        <Separator />
 
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="gender"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Gender
-                        </Label>
-                        <Controller
-                          name="gender"
-                          control={control}
-                          render={({ field }) => (
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger className="w-full text-white bg-[#09090B] border-[rgba(255,255,255,0.08)] h-10 px-3 rounded-[14px] focus:border-[#8B7CFF] transition-all justify-between text-sm font-medium">
-                                <SelectValue placeholder="Select gender" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[14px] text-white">
-                                <SelectItem
-                                  value="male"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Male
-                                </SelectItem>
-                                <SelectItem
-                                  value="female"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Female
-                                </SelectItem>
-                                <SelectItem
-                                  value="other"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Other
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        {errors.gender && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.gender.message}
-                          </span>
-                        )}
-                      </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
+                          <DocumentUploadCard
+                            label="Front of ID"
+                            fileName={frontName}
+                            base64={frontBase64}
+                            onSelect={(e) =>
+                              handleFileChange(
+                                e,
+                                setFrontName,
+                                setFrontBase64,
+                                "Front of ID",
+                              )
+                            }
+                            onClear={() => {
+                              setFrontName("No file chosen");
+                              setFrontBase64(null);
+                            }}
+                            inputRef={frontInputRef}
+                          />
 
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="nationality"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Nationality
-                        </Label>
-                        <Input
-                          id="nationality"
-                          type="text"
-                          placeholder="Canadian"
-                          {...register("nationality")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.nationality && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.nationality.message}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+                          <DocumentUploadCard
+                            label="Back of ID"
+                            fileName={backName}
+                            base64={backBase64}
+                            onSelect={(e) =>
+                              handleFileChange(
+                                e,
+                                setBackName,
+                                setBackBase64,
+                                "Back of ID",
+                              )
+                            }
+                            onClear={() => {
+                              setBackName("No file chosen");
+                              setBackBase64(null);
+                            }}
+                            inputRef={backInputRef}
+                          />
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="countryCode"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Country Code
-                        </Label>
-                        <Input
-                          id="countryCode"
-                          type="text"
-                          placeholder="+1"
-                          {...register("countryCode")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.countryCode && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.countryCode.message}
-                          </span>
-                        )}
+                          <DocumentUploadCard
+                            label="Proof of Address"
+                            fileName={addressDocName}
+                            base64={addressDocBase64}
+                            onSelect={(e) =>
+                              handleFileChange(
+                                e,
+                                setAddressDocName,
+                                setAddressDocBase64,
+                                "Proof of Address",
+                              )
+                            }
+                            onClear={() => {
+                              setAddressDocName("No file chosen");
+                              setAddressDocBase64(null);
+                            }}
+                            inputRef={addressInputRef}
+                          />
+                        </div>
                       </div>
+                    )}
+                  </CardContent>
 
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="country"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Country
-                        </Label>
-                        <Input
-                          id="country"
-                          type="text"
-                          placeholder="Canada"
-                          {...register("country")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.country && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.country.message}
-                          </span>
-                        )}
-                      </div>
+                  <Separator />
 
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="phoneNumber"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Phone Number
-                        </Label>
-                        <Input
-                          id="phoneNumber"
-                          type="tel"
-                          placeholder="604-555-0199"
-                          {...register("phoneNumber")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.phoneNumber && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.phoneNumber.message}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
+                  <CardFooter className="flex items-center justify-between">
+                    {currentStep > 1 ? (
+                      <Button type="button" variant="outline" onClick={handlePrevStep} className="mt-4 rounded-full">
+                        <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                      </Button>
+                    ) : (
+                      <div />
+                    )}
 
-                {/* STEP 2: RESIDENTIAL & FUNDS */}
-                {currentStep === 2 && (
-                  <div className="flex flex-col gap-md animate-fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="addressLine1"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Street Address
-                        </Label>
-                        <Input
-                          id="addressLine1"
-                          type="text"
-                          placeholder="123 Alpha Wealth Blvd"
-                          {...register("addressLine1")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.addressLine1 && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.addressLine1.message}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="city"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          City
-                        </Label>
-                        <Input
-                          id="city"
-                          type="text"
-                          placeholder="Vancouver"
-                          {...register("city")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.city && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.city.message}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="state"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          State / Province
-                        </Label>
-                        <Input
-                          id="state"
-                          type="text"
-                          placeholder="BC"
-                          {...register("state")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.state && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.state.message}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-md">
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="postalCode"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Postal Code
-                        </Label>
-                        <Input
-                          id="postalCode"
-                          type="text"
-                          placeholder="V6B 1A1"
-                          {...register("postalCode")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.postalCode && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.postalCode.message}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="sourceOfFunds"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Source of Funds
-                        </Label>
-                        <Controller
-                          name="sourceOfFunds"
-                          control={control}
-                          render={({ field }) => (
-                            <Select
-                              value={field.value}
-                              onValueChange={field.onChange}
-                            >
-                              <SelectTrigger className="w-full text-white bg-[#09090B] border-[rgba(255,255,255,0.08)] h-10 px-3 rounded-[14px] focus:border-[#8B7CFF] transition-all justify-between text-sm font-medium">
-                                <SelectValue placeholder="Select Source" />
-                              </SelectTrigger>
-                              <SelectContent className="bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[14px] text-white">
-                                <SelectItem
-                                  value="salary"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Salary / Wages
-                                </SelectItem>
-                                <SelectItem
-                                  value="investments"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Investments / Trading
-                                </SelectItem>
-                                <SelectItem
-                                  value="mining"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Mining Operations
-                                </SelectItem>
-                                <SelectItem
-                                  value="savings"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Personal Savings
-                                </SelectItem>
-                                <SelectItem
-                                  value="other"
-                                  className="hover:bg-[#1D1D22] text-sm p-2 cursor-pointer"
-                                >
-                                  Other
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          )}
-                        />
-                        {errors.sourceOfFunds && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.sourceOfFunds.message}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* STEP 3: DOCUMENT VERIFICATION */}
-                {currentStep === 3 && (
-                  <div className="flex flex-col gap-md animate-fade-in">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-md">
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="documentId"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Document ID
-                        </Label>
-                        <Input
-                          id="documentId"
-                          type="text"
-                          placeholder="Passport / ID Number"
-                          {...register("documentId")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.documentId && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.documentId.message}
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex flex-col gap-xs">
-                        <Label
-                          htmlFor="kycPassword"
-                          className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
-                        >
-                          Verification Password (Optional)
-                        </Label>
-                        <Input
-                          id="kycPassword"
-                          type="text"
-                          placeholder="Plain text token identifier"
-                          {...register("kycPassword")}
-                          className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400 focus:border-[#8B7CFF] transition-all"
-                        />
-                        {errors.kycPassword && (
-                          <span className="text-xs text-red-400 font-semibold mt-1">
-                            {errors.kycPassword.message}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col gap-xs">
-                      <Label
-                        htmlFor="extraNotes"
-                        className="text-xs font-semibold text-zinc-400 uppercase tracking-wider"
+                    {currentStep < 3 ? (
+                      <Button type="button" onClick={handleNextStep} className="mt-4 rounded-full">
+                        Next <ChevronRight className="w-4 h-4 ml-1" />
+                      </Button>
+                    ) : (
+                      <Button
+                        type="submit"
+                        disabled={submitting}
+                        className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold mt-4 rounded-full px-lg"
                       >
-                        Additional Compliance Notes (Optional)
-                      </Label>
-                      <textarea
-                        id="extraNotes"
-                        rows={2}
-                        placeholder="Provide details about institutional partnerships, corporate assets, or related accounts..."
-                        {...register("extraNotes")}
-                        className="rounded-[14px] border border-[rgba(255,255,255,0.08)] bg-transparent text-sm p-3 text-white placeholder:text-zinc-400 focus:outline-none focus:border-[#8B7CFF] resize-none font-sans transition-all"
-                      />
-                      {errors.extraNotes && (
-                        <span className="text-xs text-red-400 font-semibold mt-1">
-                          {errors.extraNotes.message}
-                        </span>
-                      )}
-                    </div>
+                        {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                        Submit Verification
+                      </Button>
+                    )}
+                  </CardFooter>
+                </form>
+              </Card>
+            )}
+          </div>
 
-                    {/* Document Upload Grids */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-md border-t border-[rgba(255,255,255,0.06)] pt-md">
-                      {/* Front of ID */}
-                      <div className="flex flex-col gap-sm">
-                        <Label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Front of ID
-                        </Label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          ref={frontInputRef}
-                          onChange={(e) =>
-                            handleFileChange(
-                              e,
-                              setFrontName,
-                              setFrontBase64,
-                              "Front of ID",
-                            )
-                          }
-                          className="hidden"
-                        />
-                        <div className="flex items-center gap-sm">
-                          <Button
-                            type="button"
-                            onClick={() => frontInputRef.current?.click()}
-                            className="bg-[#1D1D22] border border-[rgba(255,255,255,0.08)] hover:bg-[#27272D] text-white text-[13px] font-semibold h-10 rounded-[12px] px-md flex items-center gap-xs transition-colors shrink-0"
-                          >
-                            <Upload className="w-4 h-4" /> Upload
-                          </Button>
-                          <span className="text-[12px] text-zinc-400 truncate max-w-[120px]">
-                            {frontName}
-                          </span>
-                        </div>
-
-                        {frontBase64 && (
-                          <div className="mt-sm relative w-full h-32 rounded-[14px] overflow-hidden border border-[rgba(255,255,255,0.08)] group animate-fade-in">
-                            <img
-                              src={frontBase64}
-                              alt="Front ID Preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFrontName("No file chosen");
-                                setFrontBase64(null);
-                              }}
-                              className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-black/80 rounded-full text-white transition-all cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Back of ID */}
-                      <div className="flex flex-col gap-sm">
-                        <Label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Back of ID
-                        </Label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          ref={backInputRef}
-                          onChange={(e) =>
-                            handleFileChange(
-                              e,
-                              setBackName,
-                              setBackBase64,
-                              "Back of ID",
-                            )
-                          }
-                          className="hidden"
-                        />
-                        <div className="flex items-center gap-sm">
-                          <Button
-                            type="button"
-                            onClick={() => backInputRef.current?.click()}
-                            className="bg-[#1D1D22] border border-[rgba(255,255,255,0.08)] hover:bg-[#27272D] text-white text-[13px] font-semibold h-10 rounded-[12px] px-md flex items-center gap-xs transition-colors shrink-0"
-                          >
-                            <Upload className="w-4 h-4" /> Upload
-                          </Button>
-                          <span className="text-[12px] text-zinc-400 truncate max-w-[120px]">
-                            {backName}
-                          </span>
-                        </div>
-
-                        {backBase64 && (
-                          <div className="mt-sm relative w-full h-32 rounded-[14px] overflow-hidden border border-[rgba(255,255,255,0.08)] group animate-fade-in">
-                            <img
-                              src={backBase64}
-                              alt="Back ID Preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setBackName("No file chosen");
-                                setBackBase64(null);
-                              }}
-                              className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-black/80 rounded-full text-white transition-all cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Proof of Address */}
-                      <div className="flex flex-col gap-sm">
-                        <Label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">
-                          Proof of Address
-                        </Label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          ref={addressInputRef}
-                          onChange={(e) =>
-                            handleFileChange(
-                              e,
-                              setAddressDocName,
-                              setAddressDocBase64,
-                              "Proof of Address",
-                            )
-                          }
-                          className="hidden"
-                        />
-                        <div className="flex items-center gap-sm">
-                          <Button
-                            type="button"
-                            onClick={() => addressInputRef.current?.click()}
-                            className="bg-[#1D1D22] border border-[rgba(255,255,255,0.08)] hover:bg-[#27272D] text-white text-[13px] font-semibold h-10 rounded-[12px] px-md flex items-center gap-xs transition-colors shrink-0"
-                          >
-                            <Upload className="w-4 h-4" /> Upload
-                          </Button>
-                          <span className="text-[12px] text-zinc-400 truncate max-w-[120px]">
-                            {addressDocName}
-                          </span>
-                        </div>
-
-                        {addressDocBase64 && (
-                          <div className="mt-sm relative w-full h-32 rounded-[14px] overflow-hidden border border-[rgba(255,255,255,0.08)] group animate-fade-in">
-                            <img
-                              src={addressDocBase64}
-                              alt="Proof of Address Preview"
-                              className="w-full h-full object-cover"
-                            />
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setAddressDocName("No file chosen");
-                                setAddressDocBase64(null);
-                              }}
-                              className="absolute top-1.5 right-1.5 p-1 bg-black/60 hover:bg-black/80 rounded-full text-white transition-all cursor-pointer"
-                            >
-                              <X className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Navigation Buttons Row */}
-                <div className="flex items-center justify-between border-t border-[rgba(255,255,255,0.06)] pt-lg mt-md shrink-0">
-                  {currentStep > 1 ? (
-                    <Button
-                      type="button"
-                      onClick={handlePrevStep}
-                      className="bg-[#1D1D22] border border-[rgba(255,255,255,0.08)] hover:bg-[#27272D] text-white text-[13px] font-semibold h-10 rounded-[12px] px-md flex items-center gap-xs transition-all cursor-pointer"
-                    >
-                      <ChevronLeft className="w-4 h-4" /> Back
-                    </Button>
-                  ) : (
-                    <div />
-                  )}
-
-                  {currentStep < 3 ? (
-                    <Button
-                      type="button"
-                      onClick={handleNextStep}
-                      className="bg-[#8B7CFF] hover:bg-[#7A6BEA] text-white text-[13px] font-semibold h-10 rounded-[12px] px-md flex items-center gap-xs transition-all ml-auto cursor-pointer"
-                    >
-                      Next Step <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      disabled={submitting}
-                      className="bg-green-600 hover:bg-green-500 text-white text-[13px] font-semibold h-10 rounded-[12px] px-lg flex items-center gap-xs cursor-pointer transition-colors ml-auto"
-                    >
-                      {submitting ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />{" "}
-                          Submitting...
-                        </>
-                      ) : (
-                        "Submit Verification"
-                      )}
-                    </Button>
-                  )}
+          {/* Sidebar Guidelines & Tier Perks (4 cols) */}
+          <div className="lg:col-span-4 flex flex-col gap-md">
+            <Card className="border-border bg-card rounded-[24px]">
+              <CardHeader className="pb-xs">
+                <CardTitle className="text-base font-semibold flex items-center gap-xs text-foreground">
+                  <ShieldCheck className="w-4 h-4 text-accent-foreground" /> Verified Tier Benefits
+                </CardTitle>
+                <CardDescription className="text-xs text-muted-foreground">
+                  Completing identity verification unlocks institutional infrastructure.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-sm text-xs pt-md">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Withdrawal Limit</span>
+                  <Badge variant="secondary" className="font-semibold">$250,000 / day</Badge>
                 </div>
-              </form>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">ASIC Mining Clusters</span>
+                  <Badge variant="secondary" className="text-emerald-500 font-semibold">Unlocked</Badge>
+                </div>
+                <Separator />
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Automated Bots</span>
+                  <Badge variant="secondary" className="text-emerald-500 font-semibold">Enabled</Badge>
+                </div>
+              </CardContent>
             </Card>
-          )}
-        </div>
 
-        {/* Informative Side Cards (4 cols) */}
-        <div className="lg:col-span-4 flex flex-col gap-md">
-          <Card
-            variant="flat"
-            className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-          >
-            <div className="flex items-center gap-sm">
-              <ShieldCheck className="w-5 h-5 text-[#8B7CFF]" />
-              <span className="font-semibold text-[15px]">
-                Security Standards
-              </span>
-            </div>
-            <p className="text-[12px] text-zinc-400 leading-relaxed font-medium">
-              We encrypt sensitive identification data using 256-bit AES
-              algorithms. Our compliance teams use secure air-gapped terminals
-              to verify your files, and details are never distributed to
-              third-party databases.
-            </p>
-          </Card>
-
-          <Card
-            variant="flat"
-            className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-          >
-            <div className="flex items-center gap-sm">
-              <HelpCircle className="w-5 h-5 text-[#8B7CFF]" />
-              <span className="font-semibold text-[15px]">
-                Need Assistance?
-              </span>
-            </div>
-            <p className="text-[12px] text-zinc-400 leading-relaxed font-medium">
-              If document uploads fail or if you're holding a corporate account,
-              reach out to our VIP compliance desk directly.
-            </p>
-            <Button
-              variant="outline"
-              className="w-full border-[rgba(255,255,255,0.06)] bg-[#09090B] text-[12px] font-semibold hover:bg-[#1D1D22] h-9 rounded-[12px]"
-            >
-              Support Desk
-            </Button>
-          </Card>
+            <Alert className="border-border bg-muted/30 rounded-[20px]">
+              <Info className="h-4 w-4 text-accent-foreground" />
+              <AlertTitle className="text-xs font-semibold text-foreground">Encryption & Privacy</AlertTitle>
+              <AlertDescription className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
+                Your compliance parameters and uploaded identity documents are stored using AES-256 bank-level encryption.
+              </AlertDescription>
+            </Alert>
+          </div>
         </div>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

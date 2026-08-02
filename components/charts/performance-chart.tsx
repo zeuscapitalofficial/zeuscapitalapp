@@ -1,126 +1,236 @@
 "use client";
 
-import * as React from "react";
+import { Delta, DeltaIcon, DeltaValue } from "@/components/delta";
 import {
-  Area,
-  AreaChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  type ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { formatDate } from "@/components/formatter";
+import { useEffect, useId, useMemo, useState } from "react";
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 
-export interface ChartDataPoint {
-  label: string;
-  value: number;
+/** One row per day: ISO `date`, `btc` / `eth` = crypto performance values ($). */
+type CryptoChartRow = {
+  date: string;
+  btc: number;
+  eth: number;
+};
+
+const chartConfig = {
+  btc: {
+    label: "Bitcoin",
+    color: "var(--chart-2)",
+  },
+  eth: {
+    label: "Ethereum",
+    color: "var(--chart-3)",
+  },
+} satisfies ChartConfig;
+
+function parseChartDay(isoDate: string) {
+  return new Date(`${isoDate}T12:00:00`);
 }
 
-export interface PerformanceChartProps {
-  data: ChartDataPoint[];
-  height?: number | string;
-  strokeColor?: string;
-  fillColor?: string;
-  valueType?: "currency" | "btc";
+function rowTotal(row: CryptoChartRow) {
+  return row.btc + row.eth;
 }
 
-export function PerformanceChart({
-  data,
-  height = 350,
-  strokeColor = "#000000",
-  fillColor = "rgba(0, 0, 0, 0.03)",
-  valueType = "currency",
-}: PerformanceChartProps) {
-  const [isMounted, setIsMounted] = React.useState(false);
+const animationConfig = {
+  glowWidth: 520,
+};
 
-  const formatValue = (val: number) => {
-    if (valueType === "btc") {
-      return `${val.toLocaleString()} BTC`;
-    }
-    return `$${val.toLocaleString()}`;
+function highlightXFromChartMouseEvent(e: unknown): number | null {
+  const ex = e as {
+    activeCoordinate?: { x?: number; y?: number };
+    chartX?: number;
   };
+  const fromActive = ex.activeCoordinate?.x;
+  if (typeof fromActive === "number" && Number.isFinite(fromActive)) {
+    return fromActive;
+  }
+  const legacy = ex.chartX;
+  if (typeof legacy === "number" && Number.isFinite(legacy)) {
+    return legacy;
+  }
+  return null;
+}
 
-  React.useEffect(() => {
-    setIsMounted(true);
+export function PerformanceChart() {
+  const chartUid = useId().replace(/:/g, "");
+
+  const idMaskGrad = `sales-chart-mask-grad-${chartUid}`;
+  const idMask = `sales-chart-highlight-mask-${chartUid}`;
+
+  const [chartData, setChartData] = useState<CryptoChartRow[]>([]);
+  const [xAxis, setXAxis] = useState<number | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const res = await fetch("/api/crypto");
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch crypto data");
+        }
+
+        const data: CryptoChartRow[] = await res.json();
+        setChartData(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadData();
   }, []);
 
-  if (!isMounted) {
-    return (
-      <div
-        style={{ height }}
-        className="w-full flex items-center justify-center bg-[rgba(0,0,0,0.02)] border border-[rgba(0,0,0,0.06)] rounded-card-custom animate-pulse"
-      >
-        <span className="text-[13px] text-[rgba(0,0,0,0.4)] font-medium">
-          Loading analytics...
-        </span>
-      </div>
-    );
-  }
+  const chartRows = chartData;
+
+  const growthPctNum = useMemo(() => {
+    const first = chartRows[0];
+    if (!first) {
+      return 0;
+    }
+    const last = chartRows.at(-1);
+    if (!last) {
+      return 0;
+    }
+    const a = rowTotal(first);
+    const b = rowTotal(last);
+    if (!a) {
+      return 0;
+    }
+    return ((b - a) / a) * 100;
+  }, [chartRows]);
+
+  const xAxisMinTickGap = 32;
+
+  const idGradBTC = `sales-chart-grad-online-${chartUid}`;
+  const idGradETH = `sales-chart-grad-retail-${chartUid}`;
 
   return (
-    <div style={{ height }} className="w-full font-sans select-none">
-      <ResponsiveContainer width="100%" height="100%">
-        <AreaChart
-          data={data}
-          margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+    <Card className="w-full">
+      <CardHeader>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="">Crypto Prices</CardTitle>
+              <Delta value={growthPctNum} variant="badge">
+                <DeltaIcon variant="trend" />
+                <DeltaValue />
+              </Delta>
+            </div>
+            <CardDescription>
+              Bitcoin and Ethereum performance over the last 30 days.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer
+          className="aspect-21/9 min-h-48 w-full p-0"
+          config={chartConfig}
         >
-          <defs>
-            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%" stopColor={strokeColor} stopOpacity={0.08} />
-              <stop offset="95%" stopColor={strokeColor} stopOpacity={0.0} />
-            </linearGradient>
-          </defs>
-          <CartesianGrid
-            strokeDasharray="4 4"
-            vertical={false}
-            stroke="rgba(0,0,0,0.04)"
-          />
-          <XAxis
-            dataKey="label"
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: "rgba(0,0,0,0.4)", fontSize: 11 }}
-            dy={10}
-          />
-          <YAxis
-            axisLine={false}
-            tickLine={false}
-            tick={{ fill: "rgba(0,0,0,0.4)", fontSize: 11 }}
-            tickFormatter={formatValue}
-            width={70}
-          />
-          <Tooltip
-            content={({ active, payload }) => {
-              if (active && payload && payload.length) {
-                return (
-                  <div className="bg-white border border-[rgba(0,0,0,0.08)] p-[13px] rounded-input-custom shadow-md backdrop-blur-md">
-                    <p className="text-[11px] font-semibold text-[rgba(0,0,0,0.4)] uppercase tracking-wider mb-[3px]">
-                      {payload[0].payload.label}
-                    </p>
-                    <p className="text-[16px] font-bold text-[#000000] tracking-tight">
-                      {formatValue(payload[0].value as number)}
-                    </p>
-                  </div>
-                );
-              }
-              return null;
+          <AreaChart
+            // accessibilityLayer
+            data={chartRows}
+            margin={{
+              left: 4,
+              right: 12,
+              top: 8,
             }}
-          />
-          <Area
-            type="monotone"
-            dataKey="value"
-            stroke={strokeColor}
-            strokeWidth={1.5}
-            fill="url(#chartGradient)"
-            activeDot={{
-              r: 5,
-              stroke: "#FFFFFF",
-              strokeWidth: 2,
-              fill: strokeColor,
-            }}
-          />
-        </AreaChart>
-      </ResponsiveContainer>
-    </div>
+            onMouseLeave={() => setXAxis(null)}
+            onMouseMove={(e) => setXAxis(highlightXFromChartMouseEvent(e))}
+          >
+            <CartesianGrid
+              className="stroke-border"
+              strokeDasharray="3 3"
+              vertical={false}
+            />
+            <XAxis
+              axisLine={false}
+              dataKey="date"
+              interval="preserveStartEnd"
+              minTickGap={xAxisMinTickGap}
+              tickFormatter={(value) => formatDate(String(value), "day-month")}
+              tickLine={false}
+              tickMargin={8}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} cursor={false} />
+
+            <defs>
+              <linearGradient id={idMaskGrad} x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="transparent" />
+                <stop offset="28%" stopColor="white" stopOpacity={0.55} />
+                <stop offset="50%" stopColor="white" />
+                <stop offset="72%" stopColor="white" stopOpacity={0.55} />
+                <stop offset="100%" stopColor="transparent" />
+              </linearGradient>
+              <linearGradient id={idGradBTC} x1="0" x2="0" y1="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-btc)"
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-btc)"
+                  stopOpacity={0}
+                />
+              </linearGradient>
+              <linearGradient id={idGradETH} x1="0" x2="0" y1="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="var(--color-eth)"
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="var(--color-eth)"
+                  stopOpacity={0}
+                />
+              </linearGradient>
+              {typeof xAxis === "number" && Number.isFinite(xAxis) ? (
+                <mask id={idMask}>
+                  <rect
+                    fill={`url(#${idMaskGrad})`}
+                    height="100%"
+                    width={animationConfig.glowWidth}
+                    x={xAxis - animationConfig.glowWidth / 2}
+                    y={0}
+                  />
+                </mask>
+              ) : null}
+            </defs>
+            <Area
+              dataKey="btc"
+              fill={`url(#${idGradBTC})`}
+              fillOpacity={0.4}
+              mask={`url(#${idMask})`}
+              stroke="var(--color-btc)"
+              strokeWidth={0.8}
+              type="linear"
+            />
+            <Area
+              dataKey="eth"
+              fill={`url(#${idGradETH})`}
+              fillOpacity={0.4}
+              mask={`url(#${idMask})`}
+              stroke="var(--color-eth)"
+              strokeWidth={0.8}
+              type="linear"
+            />
+          </AreaChart>
+        </ChartContainer>
+      </CardContent>
+    </Card>
   );
 }

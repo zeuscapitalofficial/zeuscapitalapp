@@ -53,15 +53,16 @@ export async function GET() {
         CONSTRAINT "notification_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE
       );
     `);
-    
+
     // Create index on notification(userId)
     await prisma.$executeRawUnsafe(`
       CREATE INDEX IF NOT EXISTS "notification_userId_idx" ON "notification"("userId");
     `);
 
-    return NextResponse.json({ 
-      success: true, 
-      message: "Database successfully migrated and notifications table created."
+    return NextResponse.json({
+      success: true,
+      message:
+        "Database successfully migrated and notifications table created.",
     });
   } catch (error: any) {
     return NextResponse.json(

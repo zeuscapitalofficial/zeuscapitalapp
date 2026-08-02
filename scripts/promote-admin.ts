@@ -24,7 +24,7 @@ async function main() {
   console.log(`Connecting to Neon database...`);
   try {
     const user = await prisma.user.findUnique({
-      where: { email: email.trim() }
+      where: { email: email.trim() },
     });
 
     if (!user) {
@@ -35,7 +35,7 @@ async function main() {
     console.log(`Promoting user '${user.name}' (${user.email}) to ADMIN...`);
     const updatedUser = await prisma.user.update({
       where: { email: email.trim() },
-      data: { role: "ADMIN" }
+      data: { role: "ADMIN" },
     });
 
     console.log(`Success! User role updated to ${updatedUser.role}.`);

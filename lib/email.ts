@@ -1,58 +1,58 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { getPasswordResetHtml } from "./emails/password-reset";
 import { getVerificationHtml } from "./emails/verification";
 
 export { getVerificationHtml, getPasswordResetHtml };
 
-// Retrieve Gmail App Password settings from environment
-const SMTP_USER = process.env.SMTP_USER || "";
-const SMTP_PASSWORD = process.env.SMTP_PASSWORD || "";
-const SMTP_FROM =
-  process.env.SMTP_FROM ||
-  `"${process.env.SMTP_USER_NAME || "Zeus Capital"}" <${SMTP_USER}>`;
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const RESEND_FROM_EMAIL =
+  process.env.RESEND_FROM_EMAIL || "Zeus Capital <onboarding@resend.dev>";
 
-// Create transporter configured for Google App Passwords
-const hasGmailConfig = SMTP_USER && SMTP_PASSWORD;
-
-const transporter = hasGmailConfig
-  ? nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: SMTP_USER,
-        pass: SMTP_PASSWORD,
-      },
-    })
-  : null;
+const resend = RESEND_API_KEY ? new Resend(RESEND_API_KEY) : null;
 
 interface SendEmailParams {
   to: string;
   subject: string;
   html: string;
   text: string;
+  idempotencyKey?: string;
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailParams) {
-  if (transporter) {
-    try {
-      await transporter.sendMail({
-        from: SMTP_FROM,
-        to,
+export async function sendEmail({
+  to,
+  subject,
+  html,
+  text,
+  idempotencyKey,
+}: SendEmailParams) {
+  if (resend) {
+    const { data, error } = await resend.emails.send(
+      {
+        from: RESEND_FROM_EMAIL,
+        to: [to],
         subject,
-        text,
         html,
-      });
-      console.log(`[Gmail] Email successfully sent to ${to}: "${subject}"`);
-    } catch (error) {
-      console.error(`[Gmail_ERROR] Failed to send email to ${to}:`, error);
-    }
-  } else {
-    console.log("\n=========================================");
-    console.log(
-      `[Gmail_LOGGER] (Gmail credentials missing in .env, logging to console)`,
+        text,
+      },
+      idempotencyKey ? { idempotencyKey } : undefined
     );
-    console.log(`To:      ${to}`);
-    console.log(`Subject: ${subject}`);
-    console.log(`Text:    ${text}`);
-    console.log("=========================================\n");
+
+    if (error) {
+      console.error(`[Resend_ERROR] Failed to send email to ${to}:`, error.message);
+      return { success: false, error };
+    }
+
+    console.log(`[Resend] Email successfully sent to ${to} (ID: ${data?.id})`);
+    return { success: true, id: data?.id };
   }
+
+  console.log("\n=========================================");
+  console.log(
+    `[Resend_LOGGER] (RESEND_API_KEY missing in .env, logging to console)`
+  );
+  console.log(`To:      ${to}`);
+  console.log(`Subject: ${subject}`);
+  console.log(`Text:    ${text}`);
+  console.log("=========================================\n");
+  return { success: true, mocked: true };
 }

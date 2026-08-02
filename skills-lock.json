@@ -37,6 +37,12 @@
       "skillPath": "skills/email-best-practices/SKILL.md",
       "computedHash": "cf53e0d7ad72c440818c64a104ab220f527f26f10c7d8163fa99e066bf747eed"
     },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "skillPath": ".agents/skills/impeccable/SKILL.md",
+      "computedHash": "8c5f76992b65e77737a0f4f39e1b51f34b720c86351a551993481758d552a83c"
+    },
     "migrate-radix-to-base": {
       "source": "shadcn/ui",
       "sourceType": "github",

@@ -1,180 +1,127 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2, Trash2, AlertTriangle, Shield, AlertCircle, XCircle } from "lucide-react";
+import {
+  ShieldAlert,
+  Download,
+  Trash2,
+  FileCheck,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { useSession } from "@/lib/auth-client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 
 export function PrivacySettings() {
-  const { data: session } = useSession();
-  const user = session?.user;
-  const [deleting, setDeleting] = useState(false);
-  const [confirmText, setConfirmText] = useState("");
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
-  const handleDeleteAccount = async () => {
-    if (confirmText !== "DELETE") {
-      toast.error("Please type DELETE to confirm");
-      return;
-    }
-
-    setDeleting(true);
+  const handleExportData = async () => {
+    setDownloading(true);
     try {
-      const res = await fetch("/api/user/settings/delete-account", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ confirm: "DELETE" }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to delete account");
-
-      toast.success("Account deletion initiated. You will be logged out shortly.");
-      setTimeout(() => {
-        window.location.href = "/auth/sign-in";
-      }, 3000);
-    } catch (error: any) {
-      toast.error(error.message || "Failed to delete account");
+      const res = await fetch("/api/user/settings/privacy/export");
+      if (!res.ok) throw new Error("Failed to export data");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "zeus-capital-user-data.json";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast.success("Account data archive exported successfully.");
+    } catch (e: any) {
+      toast.error(e.message || "Data export failed.");
     } finally {
-      setDeleting(false);
+      setDownloading(false);
     }
   };
 
   return (
-    <div className="space-y-lg max-w-[620px]">
-      {/* Data & Privacy Info */}
-      <Card variant="flat" className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px]">
-        <div className="flex items-center gap-xs">
-          <Shield className="w-5 h-5 text-[#8B7CFF]" />
-          <h3 className="text-[18px] font-semibold text-white">Privacy & Data</h3>
-        </div>
-        <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium mt-sm">
-          Control your personal data and account privacy settings.
-        </p>
-
-        <div className="space-y-md mt-lg">
-          <div className="flex items-start gap-sm p-md bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px]">
-            <div className="bg-blue-500/20 p-2 rounded-[10px] flex-shrink-0">
-              <Shield className="w-5 h-5 text-blue-400" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full items-stretch">
+      {/* Data Export Card */}
+      <Card className="shadow-xs border-border bg-card flex flex-col h-full">
+        <CardHeader className="border-b border-border pb-4 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+              <Download className="size-4" />
             </div>
             <div>
-              <p className="text-[14px] font-medium text-white">Data Encryption</p>
-              <p className="text-[12px] text-[rgba(255,255,255,0.6)] mt-0.5">
-                All your personal data is encrypted at rest using AES-256 encryption.
-                Data in transit is protected with TLS 1.3.
-              </p>
+              <CardTitle className="text-base font-bold text-foreground">Data Export & Portability</CardTitle>
+              <CardDescription className="text-xs">
+                Download a complete JSON copy of your personal data & activity history.
+              </CardDescription>
             </div>
           </div>
+        </CardHeader>
 
-          <div className="flex items-start gap-sm p-md bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px]">
-            <div className="bg-green-500/20 p-2 rounded-[10px] flex-shrink-0">
-              <Shield className="w-5 h-5 text-green-400" />
-            </div>
-            <div>
-              <p className="text-[14px] font-medium text-white">Data Retention</p>
-              <p className="text-[12px] text-[rgba(255,255,255,0.6)] mt-0.5">
-                We retain your data for as long as your account is active and for 7 years
-                after closure for legal and regulatory compliance.
-              </p>
-            </div>
+        <CardContent className="pt-5 space-y-3 text-xs text-muted-foreground flex-1">
+          <p>
+            Your archive includes account records, transaction history, KYC verification logs, and wallet configurations.
+          </p>
+          <div className="p-3 rounded-lg border border-border bg-background space-y-1">
+            <span className="font-semibold text-foreground block flex items-center gap-1.5">
+              <FileCheck className="size-3.5 text-emerald-500" /> GDPR & Privacy Compliant
+            </span>
+            <p className="text-[11px]">Formatted as machine-readable JSON archive.</p>
           </div>
+        </CardContent>
 
-          <div className="flex items-start gap-sm p-md bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px]">
-            <div className="bg-purple-500/20 p-2 rounded-[10px] flex-shrink-0">
-              <Shield className="w-5 h-5 text-purple-400" />
-            </div>
-            <div>
-              <p className="text-[14px] font-medium text-white">Your Rights</p>
-              <p className="text-[12px] text-[rgba(255,255,255,0.6)] mt-0.5">
-                Under GDPR and other privacy laws, you have the right to access, rectify,
-                restrict processing, and request deletion of your personal data.
-              </p>
-            </div>
-          </div>
-        </div>
+        <CardFooter className="border-t border-border pt-4 justify-end mt-auto shrink-0">
+          <Button
+            onClick={handleExportData}
+            disabled={downloading}
+            variant="outline"
+            className="text-xs h-9 gap-1.5 cursor-pointer"
+          >
+            <Download className="size-3.5" />
+            {downloading ? "Preparing Export..." : "Download Data Archive"}
+          </Button>
+        </CardFooter>
       </Card>
 
-      {/* Danger Zone - Account Deletion */}
-      <Card variant="flat" className="p-lg bg-red-500/10 border border-red-500/20 rounded-[20px]">
-        <div className="flex items-center gap-xs mb-md">
-          <AlertTriangle className="w-5 h-5 text-red-400" />
-          <h3 className="text-[18px] font-semibold text-white">Danger Zone</h3>
-        </div>
-        <p className="text-[13px] text-[rgba(255,255,255,0.6)] mb-lg">
-          Once you delete your account, there is no going back. Please be certain.
-        </p>
-
-        <div className="space-y-md">
-          <div className="p-md bg-[#09090B] border border-red-500/20 rounded-[14px]">
-            <h4 className="text-[14px] font-semibold text-red-400 mb-sm">What happens when you delete your account:</h4>
-            <ul className="space-y-xs text-[13px] text-[rgba(255,255,255,0.72)]">
-              <li className="flex items-center gap-xs"><XCircle className="w-4 h-4 text-red-400" /> All mining plans and contracts will be cancelled</li>
-              <li className="flex items-center gap-xs"><XCircle className="w-4 h-4 text-red-400" /> Wallet addresses and payment methods removed</li>
-              <li className="flex items-center gap-xs"><XCircle className="w-4 h-4 text-red-400" /> Referral network and earnings forfeited</li>
-              <li className="flex items-center gap-xs"><XCircle className="w-4 h-4 text-red-400" /> Transaction history archived (not accessible)</li>
-              <li className="flex items-center gap-xs"><XCircle className="w-4 h-4 text-red-400" /> Account cannot be recovered after 30 days</li>
-            </ul>
+      {/* Account Deletion Danger Card */}
+      <Card className="shadow-xs border-border bg-card flex flex-col h-full">
+        <CardHeader className="border-b border-border pb-4 shrink-0">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-rose-500/10 text-rose-600 flex items-center justify-center">
+              <Trash2 className="size-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold text-rose-600">Delete Account</CardTitle>
+              <CardDescription className="text-xs">
+                Permanently remove your account credentials and personal records.
+              </CardDescription>
+            </div>
           </div>
+        </CardHeader>
 
-          <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-            <DialogTrigger asChild>
-              <Button
-                variant="destructive"
-                className="w-full bg-red-500/20 hover:bg-red-500/30 text-red-400 text-[13px] font-semibold h-10 rounded-[14px]"
-              >
-                <Trash2 className="w-4 h-4 mr-2" />
-                Delete My Account
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-[#111114] border border-red-500/20 rounded-[20px] max-w-md">
-              <DialogHeader>
-                <DialogTitle className="text-white">Delete Account</DialogTitle>
-                <DialogDescription className="text-[rgba(255,255,255,0.6)]">
-                  This action is irreversible. Please type "DELETE" to confirm.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="flex flex-col gap-sm">
-                <Label htmlFor="confirmDelete" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                  Confirmation
-                </Label>
-                <Input
-                  id="confirmDelete"
-                  type="text"
-                  value={confirmText}
-                  onChange={(e) => setConfirmText(e.target.value)}
-                  placeholder="Type DELETE to confirm"
-                  className="rounded-[14px] border-red-500/30 bg-transparent text-sm h-10 text-white placeholder:text-zinc-400"
-                />
-              </div>
-              <DialogFooter className="flex gap-sm justify-end">
-                <Button variant="outline" onClick={() => setShowDeleteDialog(false)} className="h-10 rounded-[14px]">
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleDeleteAccount}
-                  disabled={deleting || confirmText !== "DELETE"}
-                  className="h-10 rounded-[14px] disabled:opacity-50"
-                >
-                  {deleting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Deleting...
-                    </>
-                  ) : (
-                    "Delete Account"
-                  )}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
+        <CardContent className="pt-5 space-y-3 flex-1">
+          <Alert variant="destructive" className="bg-rose-500/10 border-rose-500/30 text-rose-600 text-xs">
+            <ShieldAlert className="size-4 text-rose-500" />
+            <AlertTitle className="text-xs font-bold text-rose-600">Irreversible Action</AlertTitle>
+            <AlertDescription className="text-[11px] text-rose-600/90 mt-0.5">
+              Once requested, all active mining contracts will terminate and remaining balances must be settled.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+
+        <CardFooter className="border-t border-border pt-4 justify-end mt-auto shrink-0">
+          <Button
+            variant="destructive"
+            onClick={() => toast.info("To request account termination, please contact compliance support.")}
+            className="text-xs h-9 gap-1.5 cursor-pointer"
+          >
+            <Trash2 className="size-3.5" />
+            Request Account Deletion
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );

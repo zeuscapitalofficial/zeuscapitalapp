@@ -10,10 +10,7 @@ export async function GET() {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // For now, return empty array since we don't have a PaymentMethod model yet
@@ -34,15 +31,15 @@ export async function POST(request: Request) {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     // In production, save to PaymentMethod model
-    return NextResponse.json({ success: true, paymentMethod: { ...body, id: "temp-" + Date.now() } });
+    return NextResponse.json({
+      success: true,
+      paymentMethod: { ...body, id: "temp-" + Date.now() },
+    });
   } catch (error: any) {
     console.error("POST payment method failed:", error);
     return NextResponse.json(

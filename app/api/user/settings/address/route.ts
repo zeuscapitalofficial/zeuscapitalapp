@@ -10,10 +10,7 @@ export async function GET() {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Get address from KYC
@@ -48,14 +45,20 @@ export async function POST(request: Request) {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { addressLine1, addressLine2, city, state, postalCode, country, countryCode, phoneNumber } = body;
+    const {
+      addressLine1,
+      addressLine2,
+      city,
+      state,
+      postalCode,
+      country,
+      countryCode,
+      phoneNumber,
+    } = body;
 
     // Update KYC with address info
     const kyc = await prisma.kyc.upsert({

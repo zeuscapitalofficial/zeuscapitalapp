@@ -9,10 +9,7 @@ export async function POST(request: Request) {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -44,15 +41,18 @@ export async function POST(request: Request) {
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("POST change password failed:", error);
-    
+
     // Handle specific Better Auth errors
-    if (error.message?.includes("incorrect") || error.message?.includes("Invalid")) {
+    if (
+      error.message?.includes("incorrect") ||
+      error.message?.includes("Invalid")
+    ) {
       return NextResponse.json(
         { error: "Current password is incorrect" },
         { status: 400 },
       );
     }
-    
+
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
       { status: 500 },

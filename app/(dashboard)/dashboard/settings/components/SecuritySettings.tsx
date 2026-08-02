@@ -1,12 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Shield, LogOut, Activity, MapPin, Monitor, Cpu, Smartphone, Tablet } from "lucide-react";
+import {
+  Loader2,
+  Shield,
+  KeyRound,
+  Laptop,
+  Smartphone,
+  Tablet,
+  Lock,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 
@@ -27,7 +43,9 @@ export function SecuritySettings() {
   const user = session?.user;
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+
   const [sessions, setSessions] = useState<SessionData[]>([]);
   const [sessionsLoading, setSessionsLoading] = useState(true);
   const [revokingId, setRevokingId] = useState<string | null>(null);
@@ -54,9 +72,18 @@ export function SecuritySettings() {
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!currentPassword || !newPassword) return;
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Please fill out all password fields.");
+      return;
+    }
+
     if (newPassword.length < 8) {
       toast.error("New password must be at least 8 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New passwords do not match. Please verify.");
       return;
     }
 
@@ -74,6 +101,7 @@ export function SecuritySettings() {
       toast.success("Password updated successfully");
       setCurrentPassword("");
       setNewPassword("");
+      setConfirmPassword("");
     } catch (error: any) {
       toast.error(error.message || "Failed to change password");
     } finally {
@@ -101,7 +129,7 @@ export function SecuritySettings() {
   };
 
   const handleRevokeAllOtherSessions = async () => {
-    const otherSessions = sessions.filter(s => !s.current);
+    const otherSessions = sessions.filter((s) => !s.current);
     if (otherSessions.length === 0) return;
 
     try {
@@ -119,199 +147,184 @@ export function SecuritySettings() {
     }
   };
 
-  const parseUserAgent = (ua: string) => {
-    let browser = "Unknown";
-    let os = "Unknown";
-    let deviceType = "Desktop";
-
-    if (ua.includes("Mobile") || ua.includes("Android") || ua.includes("iPhone")) {
-      deviceType = ua.includes("iPad") ? "Tablet" : "Mobile";
-    } else if (ua.includes("Tablet") || ua.includes("iPad")) {
-      deviceType = "Tablet";
-    }
-
-    if (ua.includes("Chrome") && !ua.includes("Edg")) browser = "Chrome";
-    else if (ua.includes("Firefox")) browser = "Firefox";
-    else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
-    else if (ua.includes("Edg")) browser = "Edge";
-
-    if (ua.includes("Windows")) os = "Windows";
-    else if (ua.includes("Mac OS")) os = "macOS";
-    else if (ua.includes("Linux")) os = "Linux";
-    else if (ua.includes("Android")) os = "Android";
-    else if (ua.includes("iOS") || ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
-
-    return { browser, os, deviceType };
-  };
-
-  const getDeviceIcon = (deviceType: string) => {
-    switch (deviceType) {
-      case "Mobile": return <Smartphone className="w-4 h-4" />;
-      case "Tablet": return <Tablet className="w-4 h-4" />;
-      default: return <Cpu className="w-4 h-4" />;
-    }
-  };
-
   return (
-    <div className="space-y-lg max-w-[620px]">
-      {/* Password Section */}
-      <Card
-        variant="flat"
-        className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-      >
-        <div className="flex items-center gap-xs">
-          <Shield className="w-5 h-5 text-[#8B7CFF]" />
-          <h3 className="text-[18px] font-semibold text-white">Change Password</h3>
-        </div>
-        <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-          Update your account password. Use a strong, unique password.
-        </p>
-
-        <form className="flex flex-col gap-md" onSubmit={handlePasswordSubmit}>
-          <div className="flex flex-col gap-xs">
-            <Label
-              htmlFor="currentPass"
-              className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider"
-            >
-              Current Password
-            </Label>
-            <Input
-              id="currentPass"
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              placeholder="••••••••"
-              className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400"
-            />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
+      {/* Password Change Card */}
+      <Card className="shadow-xs border-border bg-card flex flex-col">
+        <CardHeader className="border-b border-border pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-accent-foreground/10 text-accent-foreground flex items-center justify-center">
+              <KeyRound className="size-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold text-foreground">Password & Credentials</CardTitle>
+              <CardDescription className="text-xs">
+                Update your account password to maintain security.
+              </CardDescription>
+            </div>
           </div>
+        </CardHeader>
 
-          <div className="flex flex-col gap-xs">
-            <Label
-              htmlFor="newPass"
-              className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider"
+        <form onSubmit={handlePasswordSubmit} className="flex-1 flex flex-col">
+          <CardContent className="pt-5 space-y-4 flex-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="current-password" className="text-xs font-semibold text-foreground">
+                Current Password
+              </Label>
+              <Input
+                id="current-password"
+                type="password"
+                required
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="text-xs h-9 bg-background"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="new-password" className="text-xs font-semibold text-foreground">
+                New Password
+              </Label>
+              <Input
+                id="new-password"
+                type="password"
+                required
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                className="text-xs h-9 bg-background"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="confirm-password" className="text-xs font-semibold text-foreground">
+                Confirm New Password
+              </Label>
+              <Input
+                id="confirm-password"
+                type="password"
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Re-enter new password"
+                className="text-xs h-9 bg-background"
+              />
+            </div>
+          </CardContent>
+
+          <CardFooter className="border-t border-border pt-4 justify-end mt-auto">
+            <Button
+              type="submit"
+              disabled={passwordLoading}
+              className="bg-accent-foreground text-background hover:bg-accent-foreground/90 text-xs h-9 gap-1.5 cursor-pointer"
             >
-              New Password
-            </Label>
-            <Input
-              id="newPass"
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="••••••••"
-              className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white placeholder:text-zinc-400"
-            />
-          </div>
-
-          <Button
-            type="submit"
-            disabled={passwordLoading}
-            className="w-[140px] bg-[#8B7CFF] hover:bg-[#7A6BEA] text-white text-[13px] font-semibold h-10 rounded-[14px] mt-xs disabled:opacity-50"
-          >
-            {passwordLoading ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Updating...
-              </>
-            ) : (
-              "Update Password"
-            )}
-          </Button>
+              {passwordLoading ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Updating...
+                </>
+              ) : (
+                <>
+                  <Lock className="size-3.5" />
+                  Update Password
+                </>
+              )}
+            </Button>
+          </CardFooter>
         </form>
       </Card>
 
-      {/* Active Sessions Section */}
-      <Card
-        variant="flat"
-        className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-xs">
-            <Activity className="w-5 h-5 text-[#8B7CFF]" />
-            <h3 className="text-[18px] font-semibold text-white">Active Sessions</h3>
+      {/* Active Login Sessions */}
+      <Card className="shadow-xs border-border bg-card flex flex-col">
+        <CardHeader className="border-b border-border pb-4 flex flex-row items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+              <Shield className="size-4" />
+            </div>
+            <div>
+              <CardTitle className="text-base font-bold text-foreground">Active Sessions</CardTitle>
+              <CardDescription className="text-xs">
+                Devices currently logged into your account.
+              </CardDescription>
+            </div>
           </div>
-          {sessions.filter(s => !s.current).length > 0 && (
+
+          {sessions.filter((s) => !s.current).length > 0 && (
             <Button
               variant="outline"
               size="sm"
               onClick={handleRevokeAllOtherSessions}
-              className="h-8 rounded-[10px] border-[rgba(255,255,255,0.06)] bg-[#111114] text-[12px] font-semibold hover:bg-[#1D1D22] text-red-400 border-red-500/20"
+              className="text-[11px] h-8 text-rose-600 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer"
             >
-              <LogOut className="w-4 h-4 mr-2" />
               Revoke All Others
             </Button>
           )}
-        </div>
+        </CardHeader>
 
-        {sessionsLoading ? (
-          <div className="flex items-center justify-center py-xl">
-            <Loader2 className="w-6 h-6 animate-spin text-[#8B7CFF]" />
-          </div>
-        ) : sessions.length === 0 ? (
-          <div className="text-center py-lg text-[rgba(255,255,255,0.48)]">
-            No active sessions found
-          </div>
-        ) : (
-          <div className="space-y-sm">
-            {sessions.map((sessionItem) => {
-              const { browser, os, deviceType } = parseUserAgent(sessionItem.userAgent);
-              const isCurrent = sessionItem.current;
-
-              return (
-                <div
-                  key={sessionItem.id}
-                  className={`flex items-center justify-between p-md bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px] ${isCurrent ? "border-[#8B7CFF]/30" : ""}`}
-                >
-                  <div className="flex items-center gap-md">
-                    <div className="bg-[#8B7CFF]/20 p-2 rounded-[10px]">
-                      {getDeviceIcon(deviceType)}
-                    </div>
-                    <div>
-                      <div className="flex items-center gap-xs">
-                        <span className="text-[14px] font-medium text-white">
-                          {browser} on {os}
-                        </span>
-                        {isCurrent && (
-                          <span className="inline-flex items-center gap-xs px-2 py-0.5 rounded-[99px] text-[10px] font-semibold bg-[#8B7CFF]/20 text-[#8B7CFF] uppercase tracking-wider">
-                            Current
-                          </span>
+        <CardContent className="pt-4 flex-1">
+          {sessionsLoading ? (
+            <div className="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2">
+              <Loader2 className="size-4 animate-spin text-accent-foreground" />
+              Checking active sessions...
+            </div>
+          ) : sessions.length === 0 ? (
+            <p className="text-xs text-muted-foreground text-center py-6">
+              No active session data found.
+            </p>
+          ) : (
+            <ScrollArea className="max-h-80 pr-2">
+              <div className="space-y-3">
+                {sessions.map((s) => (
+                  <div
+                    key={s.id}
+                    className="flex items-center justify-between p-3 rounded-lg border border-border bg-background/50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="size-8 rounded-md bg-muted flex items-center justify-center text-foreground">
+                        {s.deviceType === "Mobile" ? (
+                          <Smartphone className="size-4" />
+                        ) : s.deviceType === "Tablet" ? (
+                          <Tablet className="size-4" />
+                        ) : (
+                          <Laptop className="size-4" />
                         )}
                       </div>
-                      <div className="flex items-center gap-sm text-[12px] text-[rgba(255,255,255,0.48)] mt-0.5">
-                        <span className="flex items-center gap-xs">
-                          <MapPin className="w-3 h-3" />
-                          {sessionItem.location || "Unknown location"}
-                        </span>
-                        <span className="flex items-center gap-xs">
-                          <Activity className="w-3 h-3" />
-                          Last active: {new Date(sessionItem.lastActive).toLocaleString()}
-                        </span>
-                        <span className="flex items-center gap-xs">
-                          <Monitor className="w-3 h-3" />
-                          {sessionItem.ipAddress}
-                        </span>
+
+                      <div className="space-y-0.5">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-semibold text-foreground">
+                            {s.browser} on {s.os}
+                          </span>
+                          {s.current && (
+                            <Badge variant="outline" className="text-[10px] bg-emerald-500/15 text-emerald-600 border-emerald-500/30">
+                              Current Device
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          Device: {s.os || "Desktop Workstation"} · Location: {s.location || "Verified Location"}
+                        </p>
                       </div>
                     </div>
+
+                    {!s.current && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={revokingId === s.id}
+                        onClick={() => handleRevokeSession(s.id)}
+                        className="text-xs h-7 text-muted-foreground hover:text-rose-600 cursor-pointer"
+                      >
+                        {revokingId === s.id ? "Revoking..." : "Revoke"}
+                      </Button>
+                    )}
                   </div>
-                  {!isCurrent && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleRevokeSession(sessionItem.id)}
-                      disabled={revokingId === sessionItem.id}
-                      className="text-red-400 hover:bg-red-500/10 h-8 rounded-[10px]"
-                    >
-                      {revokingId === sessionItem.id ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <LogOut className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
+                ))}
+              </div>
+            </ScrollArea>
+          )}
+        </CardContent>
       </Card>
     </div>
   );

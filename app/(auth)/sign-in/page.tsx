@@ -43,7 +43,7 @@ export default function SignInPage() {
       {/* Logo and Headings */}
       <div className="flex flex-col items-center text-center gap-xs">
         <Link href="/">
-          <LogoIcon className="w-10 h-10 text-primary hover:opacity-85 transition-opacity" />
+          <LogoIcon className="w-10 h-10 text-accent-foreground hover:opacity-85 transition-opacity" />
         </Link>
         <h1 className="text-[28px] md:text-[32px] font-semibold tracking-[-0.02em] mt-sm text-text-primary">
           Welcome back

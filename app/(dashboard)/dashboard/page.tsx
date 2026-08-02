@@ -1,141 +1,162 @@
 "use client";
 
+import { PerformanceChart } from "@/components/charts/performance-chart";
+import { DepositDialog } from "@/components/dashboard/deposit-dialog";
+import { ReferralCard } from "@/components/dashboard/referral-card";
+import { WithdrawDialog } from "@/components/dashboard/withdraw-dialog";
+import {
+  formatCompactCurrency,
+  formatFullCurrency,
+} from "@/components/formatter";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useSession } from "@/lib/auth-client";
 import {
   ArrowDownLeft,
   ArrowLeftRight,
-  ArrowRight,
   ArrowUpRight,
   ChevronRight,
-  Copy,
   Cpu,
   DollarSign,
   Eye,
   EyeOff,
   Gift,
   HelpCircle,
-  Layers,
-  Package,
-  Share2,
+  History,
+  PieChart,
+  Radio,
+  Settings,
   ShieldCheck,
   TrendingUp,
-  Users,
-  Wallet,
+  Wallet
 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import {
-  DashboardAreaChart,
-  DashboardPieChart,
-} from "@/components/charts/dashboard-chart";
-import { MarketChartContainer } from "@/components/charts/market-chart";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { useSession } from "@/lib/auth-client";
-
-// Mock Data for Analytics Chart
-const chartData = [
-  { label: "Jan", value: 310000 },
-  { label: "Feb", value: 325000 },
-  { label: "Mar", value: 340000 },
-  { label: "Apr", value: 335000 },
-  { label: "May", value: 370000 },
-  { label: "Jun", value: 395000 },
-  { label: "Jul", value: 424912.8 },
-];
-
-// Mock Data for Asset Allocation
-const allocationData = [
-  { name: "Bitcoin (BTC)", value: 55, color: "#F7931A" },
-  { name: "USD Halo (USDH)", value: 20, color: "#8B7CFF" },
-  { name: "Ethereum (ETH)", value: 15, color: "#627EEA" },
-  { name: "ASIC Power (TH/s)", value: 10, color: "#22C55E" },
-];
-
-// Mock Data for Transactions
-const transactions = [
-  {
-    id: "tx-001",
-    type: "payout",
-    asset: "Bitcoin (BTC)",
-    amount: "+0.0125 BTC",
-    value: "+$854.20",
-    status: "success",
-    date: "July 5, 2026",
-    icon: Cpu,
-  },
-  {
-    id: "tx-002",
-    type: "deposit",
-    asset: "USD Halo (USDH)",
-    amount: "+$5,000.00 USDH",
-    value: "+$5,000.00",
-    status: "success",
-    date: "July 4, 2026",
-    icon: ArrowDownLeft,
-  },
-  {
-    id: "tx-003",
-    type: "charge",
-    asset: "ASIC Maintenance",
-    amount: "-$45.00 USDH",
-    value: "-$45.00",
-    status: "success",
-    date: "July 3, 2026",
-    icon: ArrowUpRight,
-  },
-  {
-    id: "tx-004",
-    type: "yield",
-    asset: "USD Halo Rewards",
-    amount: "+$134.12 USDH",
-    value: "+$134.12",
-    status: "success",
-    date: "July 1, 2026",
-    icon: TrendingUp,
-  },
-];
+import { useRouter } from "next/navigation";
+import { useEffect, useState, useCallback } from "react";
 
 export default function DashboardPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [showBalance, setShowBalance] = useState(true);
   const [coinsList, setCoinsList] = useState<any[]>([]);
   const [loadingCoins, setLoadingCoins] = useState(true);
   const [copiedRef, setCopiedRef] = useState(false);
 
-  useEffect(() => {
-    let active = true;
-    async function fetchTopCoins() {
-      try {
-        setLoadingCoins(true);
-        const res = await fetch("/api/market/top-coins");
-        if (!res.ok) throw new Error();
-        const data = await res.json();
-        if (active) {
-          setCoinsList(data);
-        }
-      } catch (err) {
-        console.error("Failed to load top coins");
-      } finally {
-        if (active) {
-          setLoadingCoins(false);
-        }
-      }
+  const [userData, setUserData] = useState<{
+    name?: string;
+    email?: string;
+    balance?: number;
+    totalProfit?: number;
+    totalDeposit?: number;
+    bonusRewards?: number;
+    kycStatus?: "NONE" | "PENDING" | "APPROVED" | "REJECTED";
+  } | null>(null);
+  const [coinError, setCoinError] = useState(false);
+  const [userError, setUserError] = useState(false);
+
+  const fetchTopCoins = useCallback(async () => {
+    try {
+      setLoadingCoins(true);
+      setCoinError(false);
+      const res = await fetch("/api/market/top-coins");
+      if (!res.ok) throw new Error("Failed to fetch coins");
+      const data = await res.json();
+      setCoinsList(data);
+    } catch (err) {
+      console.error("Failed to load top coins");
+      setCoinError(true);
+    } finally {
+      setLoadingCoins(false);
     }
-    fetchTopCoins();
-    return () => {
-      active = false;
-    };
   }, []);
 
+  const fetchUserData = useCallback(async () => {
+    try {
+      setUserError(false);
+      const res = await fetch("/api/user/me");
+      if (res.ok) {
+        const data = await res.json();
+        setUserData(data);
+      } else {
+        setUserError(true);
+      }
+    } catch (err) {
+      console.error("Failed to load user profile");
+      setUserError(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTopCoins();
+    fetchUserData();
+  }, [fetchTopCoins, fetchUserData]);
+
+  // ── Alex (Power User): Keyboard shortcuts ──
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore when typing in inputs
+      const tag = (e.target as HTMLElement)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
+
+      if (e.key === "d" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        router.push("/dashboard/deposit-withdraw?tab=deposit");
+      } else if (e.key === "w" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        router.push("/dashboard/deposit-withdraw?tab=withdraw");
+      } else if (e.key === "p" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        router.push("/dashboard/packages");
+      } else if (e.key === "s" && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        router.push("/dashboard/signals");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [router]);
+
   const handleCopyRef = () => {
-    navigator.clipboard.writeText("https://zeus.capital/ref/zc-389f2a");
+    navigator.clipboard.writeText("https://zeus.capital/sign-up?ref=zc-389f2a");
     setCopiedRef(true);
     setTimeout(() => setCopiedRef(false), 2000);
   };
 
   const user = session?.user;
+  const userName = userData?.name || user?.name || "Investor";
+  const kycStatus = userData?.kycStatus || "NONE";
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  };
 
   // Format today's date
   const today = new Date().toLocaleDateString("en-US", {
@@ -146,393 +167,409 @@ export default function DashboardPage() {
   });
 
   return (
-    <div className="flex flex-col gap-lg select-none font-sans text-white bg-[#09090B] min-h-screen">
-      {/* Header Block */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-md">
-        <div className="flex flex-col gap-2">
-          <h1 className="text-[32px] md:text-[36px] font-semibold tracking-[-0.03em] leading-tight text-white">
-            Welcome back, {user?.name?.split(" ")[0] || "Investor"}
-          </h1>
-          <p className="text-[15px] text-[rgba(255,255,255,0.72)] font-medium flex items-center gap-xs">
-            <ShieldCheck className="w-4 h-4 text-[#8B7CFF]" />
-            Your secure account is generating yield normally.
-          </p>
-        </div>
-        <div className="flex gap-sm">
-          <Badge variant="pending" className="text-[13px] font-semibold">
-            Unverified
-          </Badge>
-        </div>
-      </div>
+    <div className="flex flex-col gap-lg font-sans min-h-screen">
+      <div className="grid grid-cols-1 mb-4 lg:grid-cols-12 gap-md items-stretch">
+        <Card className="lg:col-span-5 min-h-75">
+          <CardHeader className="">
+            <CardTitle className="flex items-center gap-sm">
+              <Wallet className="w-4 h-4" />
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger className="cursor-default">
+                    Account Balance
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    Total liquid capital available across your trading and mining accounts
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardTitle>
+            <CardAction>
+              <button
+                onClick={() => setShowBalance(!showBalance)}
+                className="hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-sm p-0.5"
+                aria-label={showBalance ? "Hide balance" : "Show balance"}
+              >
+                {showBalance ? (
+                  <Eye className="w-4 h-4" />
+                ) : (
+                  <EyeOff className="w-4 h-4" />
+                )}
+              </button>
+            </CardAction>
+          </CardHeader>
 
-      {/* Replicated Cards Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-stretch">
-        {/* Left Column: Account Balance Card */}
-        <Card
-          variant="flat"
-          className="lg:col-span-5 p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col justify-between gap-md min-h-[300px]"
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center w-full">
-            <div className="flex items-center gap-sm">
-              <span className="p-2 bg-[rgba(255,255,255,0.02)] border border-[rgba(255,255,255,0.04)] rounded-[10px] text-[rgba(255,255,255,0.72)]">
-                <Wallet className="w-4 h-4" />
+          <CardContent>
+            <div className="flex flex-col gap-xs mt-sm">
+              <span className="text-[36px] font-semibold tracking-[-0.03em] leading-none">
+                {!userData && !userError ? (
+                  <Skeleton className="h-9 w-40" />
+                ) : showBalance ? (
+                  formatFullCurrency(userData?.balance ?? 0)
+                ) : (
+                  "••••••"
+                )}
               </span>
-              <span className="text-[14px] font-semibold text-white">
-                Account Balance
+              <span className="text-sm text-muted-foreground font-medium">
+                Your current available balance
               </span>
             </div>
-            <button
-              onClick={() => setShowBalance(!showBalance)}
-              className="text-[rgba(255,255,255,0.48)] hover:text-white transition-colors"
-            >
-              {showBalance ? (
-                <Eye className="w-4 h-4" />
-              ) : (
-                <EyeOff className="w-4 h-4" />
-              )}
-            </button>
-          </div>
 
-          {/* Large Value */}
-          <div className="flex flex-col gap-xs mt-sm">
-            <span className="text-[36px] font-semibold tracking-[-0.03em] text-white leading-none">
-              {showBalance ? "$635,919.50" : "••••••"}
-            </span>
-            <span className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-              Your current available balance
-            </span>
-          </div>
+            <div className="h-[.1px] bg-border/60 w-full my-xs" />
 
-          <div className="h-[1px] bg-[rgba(255,255,255,0.06)] w-full my-xs" />
+            <div className="flex flex-col gap-xs">
+              <span className="text-sm text-muted-foreground font-medium">
+                Available for Withdrawal
+              </span>
+              <span className="text-[18px] font-semibold">
+                {showBalance
+                  ? formatFullCurrency(userData?.balance ?? 0)
+                  : "••••••"}
+              </span>
+            </div>
+          </CardContent>
 
-          {/* Sub-Section */}
-          <div className="flex flex-col gap-xs">
-            <span className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-              Available for Withdrawal
-            </span>
-            <span className="text-[18px] font-semibold text-white">
-              {showBalance ? "$635,919.50" : "••••••"}
-            </span>
-            <span className="text-[11px] text-[rgba(255,255,255,0.36)] font-mono">
-              Last updated: 5/7/2026, 1:34:48 AM
-            </span>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-sm mt-sm">
-            <Link href="/dashboard/deposit-withdraw" className="flex-1">
-              <Button className="w-full bg-[#1D1D22] hover:bg-[#27272D] text-white text-[14px] font-semibold h-11 rounded-[14px] border border-[rgba(255,255,255,0.04)] flex flex-col items-center justify-center">
-                <ArrowUpRight className="w-4 h-4 inline mr-1" />{" "}
-                <span className="inline">Deposit</span>
-              </Button>
-            </Link>
-            <Link href="/dashboard/deposit-withdraw" className="flex-1">
-              <Button
-                variant="outline"
-                className="w-full border-[rgba(255,255,255,0.08)] bg-transparent hover:bg-[rgba(255,255,255,0.02)] text-white text-[14px] font-semibold h-11 rounded-[14px] flex items-center justify-center"
-              >
-                <ArrowDownLeft className="w-4 h-4 inline mr-1" />{" "}
-                <span className="inline">Withdraw</span>
-              </Button>
-            </Link>
-          </div>
+          <CardFooter className="flex gap-sm mt-sm">
+            <DepositDialog
+              trigger={
+                <Button variant="outline" className="flex-1 cursor-pointer">
+                  <ArrowUpRight className="w-4 h-4 inline mr-1 text-accent-foreground" />{" "}
+                  <span className="inline">Deposit</span>
+                </Button>
+              }
+            />
+            <WithdrawDialog
+              trigger={
+                <Button variant="outline" className="flex-1 cursor-pointer">
+                  <ArrowDownLeft className="w-4 h-4 inline mr-1 text-accent-foreground" />{" "}
+                  <span className="inline">Withdraw</span>
+                </Button>
+              }
+            />
+          </CardFooter>
         </Card>
 
-        {/* Right Column: Grid of cards */}
         <div className="lg:col-span-7 flex flex-col justify-between gap-md">
-          {/* Top row */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-md flex-1">
-            {/* Total Profit */}
-            <Card
-              variant="flat"
-              className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-sm justify-between min-h-[140px] hover:border-[rgba(255,255,255,0.12)] transition-all"
-            >
-              <div className="flex items-center gap-xs text-[11px] font-semibold text-[#22C55E] tracking-wider uppercase">
-                <TrendingUp className="w-4 h-4" /> Total Profit
-              </div>
-              <span className="text-[28px] font-semibold text-white tracking-[-0.02em] mt-2 block">
-                {showBalance ? "$0" : "••••••"}
-              </span>
-              <span className="flex items-center gap-xs text-[12px] text-[#22C55E] font-semibold mt-1">
-                <TrendingUp className="w-3.5 h-3.5" /> Lifetime earnings
-              </span>
+            <Card className="">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-xs text-chart-1">
+                  <TrendingUp className="w-4 h-4" />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-default">
+                        Total Profit
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Cumulative yield from active mining contracts and trading signals
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col">
+                <span className="text-[28px] font-semibold tracking-[-0.02em] mt-2 block">
+                  {!userData && !userError ? (
+                    <Skeleton className="h-7 w-28" />
+                  ) : showBalance ? (
+                    formatFullCurrency(userData?.totalProfit ?? 0)
+                  ) : (
+                    "••••••"
+                  )}
+                </span>
+                <span className="text-xs text-muted-foreground font-semibold mt-1">
+                  Lifetime earnings
+                </span>
+              </CardContent>
             </Card>
 
-            {/* Total Deposit */}
-            <Card
-              variant="flat"
-              className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-sm justify-between min-h-[140px] hover:border-[rgba(255,255,255,0.12)] transition-all"
-            >
-              <div className="flex items-center gap-xs text-[11px] font-semibold text-[#8B7CFF] tracking-wider uppercase">
-                <DollarSign className="w-4 h-4" /> Total Deposit
-              </div>
-              <span className="text-[28px] font-semibold text-white tracking-[-0.02em] mt-2 block">
-                {showBalance ? "$530,000" : "••••••"}
-              </span>
-              <span className="text-[12px] text-[rgba(255,255,255,0.48)] font-semibold mt-1">
-                All time
-              </span>
+            <Card className="">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-xs text-chart-2">
+                  <DollarSign className="w-4 h-4" />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-default">
+                        Total Deposit
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Sum of all deposits made to your account
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col">
+                <span className="text-[28px] font-semibold tracking-[-0.02em] mt-2 block">
+                  {!userData && !userError ? (
+                    <Skeleton className="h-7 w-28" />
+                  ) : showBalance ? (
+                    formatFullCurrency(userData?.totalDeposit ?? 0)
+                  ) : (
+                    "••••••"
+                  )}
+                </span>
+                <span className="text-xs text-muted-foreground font-semibold mt-1">
+                  All time deposits
+                </span>
+              </CardContent>
             </Card>
           </div>
 
-          {/* Bottom Bonus card */}
-          <Card
-            variant="flat"
-            className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-sm justify-between min-h-[140px] hover:border-[rgba(255,255,255,0.12)] transition-all"
-          >
-            <div className="flex justify-between items-center w-full">
-              <div className="flex items-center gap-xs text-[11px] font-semibold text-purple-400 tracking-wider uppercase">
-                <Gift className="w-4 h-4" /> Bonus
-              </div>
-              <span className="text-[12px] font-semibold text-purple-400 hover:text-purple-300 transition-colors cursor-pointer">
-                Rewards & Promotions
+          <Card className="">
+            <CardHeader>
+              <CardTitle className="flex justify-between items-center w-full">
+                <span className="flex items-center gap-xs text-chart-3">
+                  <Gift className="w-4 h-4" />
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger className="cursor-default">
+                        Bonus
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        Promotional credits and referral rewards earned
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </span>
+                <span className="text-chart-3 hover:text-chart-3/70 transition-colors cursor-pointer">
+                  Rewards & Promotions
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col">
+              <span className="text-[28px] font-semibold tracking-[-0.02em] mt-2 block">
+                {!userData && !userError ? (
+                  <Skeleton className="h-7 w-28" />
+                ) : showBalance ? (
+                  formatFullCurrency(userData?.bonusRewards ?? 0)
+                ) : (
+                  "••••••"
+                )}
               </span>
-            </div>
-            <span className="text-[28px] font-semibold text-white tracking-[-0.02em] mt-2 block">
-              {showBalance ? "$0" : "••••••"}
-            </span>
+            </CardContent>
           </Card>
         </div>
       </div>
 
-      {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-stretch">
-        {/* Market Analytics CoinGecko Chart (8 cols) */}
         <div className="lg:col-span-8 flex">
-          <MarketChartContainer />
+          <PerformanceChart />
         </div>
 
-        {/* Quick Actions Hub (4 cols) */}
-        <Card
-          variant="flat"
-          className="lg:col-span-4 p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col justify-between gap-md"
-        >
-          <div className="flex flex-col gap-xs">
-            <h3 className="text-[18px] font-semibold text-white">
-              Quick Actions
-            </h3>
-          </div>
+        <Card className="lg:col-span-4 flex flex-col justify-between gap-md">
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
 
-          <div className="flex flex-col gap-3 my-xs w-full">
-            <Link href="/dashboard/deposit-withdraw">
-              <button className="w-full text-left p-md bg-[#09090B] hover:bg-[#1D1D22] border border-[rgba(255,255,255,0.04)] rounded-[14px] flex items-center justify-between transition-all group">
-                <div className="flex items-center gap-md">
-                  <span className="p-2 bg-[#111114] rounded-[10px] text-[#8B7CFF] group-hover:text-white transition-colors">
+          <CardContent>
+            <div className="flex flex-col gap-2.5">
+              <Link
+                href="/dashboard/deposit-withdraw?tab=deposit"
+                className="w-full p-3 bg-background hover:bg-accent/40 border border-border/50 rounded-xl flex items-center justify-between transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 bg-accent/50 rounded-lg text-foreground group-hover:bg-accent transition-colors">
                     <ArrowLeftRight className="w-4 h-4" />
                   </span>
                   <div className="flex flex-col">
-                    <span className="text-[13px] font-semibold text-white">
+                    <span className="text-xs font-semibold text-foreground">
                       Deposit & Withdraw
                     </span>
-                    <span className="text-[11px] text-[rgba(255,255,255,0.48)] font-medium">
-                      Fund account or withdraw yield
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Fund account or request payouts
                     </span>
+                    <kbd className="hidden lg:inline text-[10px] text-muted-foreground/60 font-mono mt-0.5">D</kbd>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[rgba(255,255,255,0.2)] group-hover:text-white transition-all transform group-hover:translate-x-1" />
-              </button>
-            </Link>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-all transform group-hover:translate-x-1" />
+              </Link>
 
-            <Link href="/dashboard/kyc">
-              <button className="w-full text-left p-md bg-[#09090B] hover:bg-[#1D1D22] border border-[rgba(255,255,255,0.04)] rounded-[14px] flex items-center justify-between transition-all group">
-                <div className="flex items-center gap-md">
-                  <span className="p-2 bg-[#111114] rounded-[10px] text-amber-400 group-hover:text-white transition-colors">
+              <Link
+                href="/dashboard/packages"
+                className="w-full p-3 bg-background hover:bg-accent/40 border border-border/50 rounded-xl flex items-center justify-between transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 bg-accent/50 rounded-lg text-foreground group-hover:bg-accent transition-colors">
+                    <Cpu className="w-4 h-4" />
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-foreground">
+                      Investment Packages
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Crypto brokerage & mining contracts
+                    </span>
+                    <kbd className="hidden lg:inline text-[10px] text-muted-foreground/60 font-mono mt-0.5">P</kbd>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-all transform group-hover:translate-x-1" />
+              </Link>
+
+              <Link
+                href="/dashboard/signals"
+                className="w-full p-3 bg-background hover:bg-accent/40 border border-border/50 rounded-xl flex items-center justify-between transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 bg-accent/50 rounded-lg text-foreground group-hover:bg-accent transition-colors">
+                    <Radio className="w-4 h-4" />
+                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-foreground">
+                      Trading Signals
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Real-time AI market analytics
+                    </span>
+                    <kbd className="hidden lg:inline text-[10px] text-muted-foreground/60 font-mono mt-0.5">S</kbd>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-all transform group-hover:translate-x-1" />
+              </Link>
+
+              <Link
+                href="/dashboard/kyc"
+                className="w-full p-3 bg-background hover:bg-accent/40 border border-border/50 rounded-xl flex items-center justify-between transition-colors group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="p-2 bg-accent/50 rounded-lg text-foreground group-hover:bg-accent transition-colors">
                     <ShieldCheck className="w-4 h-4" />
                   </span>
                   <div className="flex flex-col">
-                    <span className="text-[13px] font-semibold text-white">
-                      AML & KYC Verification
+                    <span className="text-xs font-semibold text-foreground">
+                      Account Verification
                     </span>
-                    <span className="text-[11px] text-[rgba(255,255,255,0.48)] font-medium">
-                      Verify profile to lift limits
-                    </span>
-                  </div>
-                </div>
-                <ChevronRight className="w-4 h-4 text-[rgba(255,255,255,0.2)] group-hover:text-white transition-all transform group-hover:translate-x-1" />
-              </button>
-            </Link>
-
-            <Link href="/dashboard/help">
-              <button className="w-full text-left p-md bg-[#09090B] hover:bg-[#1D1D22] border border-[rgba(255,255,255,0.04)] rounded-[14px] flex items-center justify-between transition-all group">
-                <div className="flex items-center gap-md">
-                  <span className="p-2 bg-[#111114] rounded-[10px] text-purple-400 group-hover:text-white transition-colors">
-                    <HelpCircle className="w-4 h-4" />
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-[13px] font-semibold text-white">
-                      Help Desk
-                    </span>
-                    <span className="text-[11px] text-[rgba(255,255,255,0.48)] font-medium">
-                      Raise queries or check FAQs
+                    <span className="text-xs text-muted-foreground font-medium">
+                      Verify identity for higher limits
                     </span>
                   </div>
                 </div>
-                <ChevronRight className="w-4 h-4 text-[rgba(255,255,255,0.2)] group-hover:text-white transition-all transform group-hover:translate-x-1" />
-              </button>
-            </Link>
-          </div>
+                <ChevronRight className="w-4 h-4 text-muted-foreground/50 group-hover:text-foreground transition-all transform group-hover:translate-x-1" />
+              </Link>
+            </div>
+          </CardContent>
         </Card>
       </div>
 
       {/* Replaced Transactions Table with Two Columns: Top Coins & Refer Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-stretch">
         {/* Top Coins Card (8 cols) */}
-        <Card
-          variant="flat"
-          className="lg:col-span-8 p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md h-[400px] overflow-hidden"
-        >
-          <div className="flex flex-col gap-xs shrink-0">
-            <h3 className="text-[18px] font-semibold text-white">
-              Top Cryptocurrency Indices
-            </h3>
-            <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-              Live market valuations via CoinGecko index rankings
-            </p>
-          </div>
+        <Card className="lg:col-span-8 h-[400px] overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Top Cryptocurrency Indices</CardTitle>
+              <CardDescription>
+                Live market valuations via CoinGecko index rankings
+              </CardDescription>
+            </div>
+            {coinError && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fetchTopCoins()}
+                className="text-xs gap-1 cursor-pointer"
+              >
+                Retry
+              </Button>
+            )}
+          </CardHeader>
 
-          <ScrollArea className="flex-1 w-full overflow-hidden pr-2">
-            <div className="overflow-x-auto w-full">
-              <table className="w-full text-left border-collapse select-none">
-                <thead>
-                  <tr className="border-b border-[rgba(255,255,255,0.04)] text-[12px] font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider h-[40px]">
-                    <th className="py-2 pr-4">Asset</th>
-                    <th className="py-2 px-4 text-right">Price</th>
-                    <th className="py-2 px-4 text-right">24h Change</th>
-                    <th className="py-2 pl-4 text-right">Market Cap</th>
-                  </tr>
-                </thead>
-                <tbody>
+          <CardContent>
+            <ScrollArea className="h-80 flex-1 w-full overflow-hidden pr-4">
+              <Table className="select-none">
+                <TableHeader>
+                  <TableRow className="border-b border-border/40 hover:bg-transparent">
+                    <TableHead className="py-2 pr-4 text-xs font-semibold text-muted-foreground uppercase tracking-wider h-10">
+                      Asset
+                    </TableHead>
+                    <TableHead className="py-2 px-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider h-10">
+                      Price
+                    </TableHead>
+                    <TableHead className="py-2 px-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider h-10">
+                      24h Change
+                    </TableHead>
+                    <TableHead className="py-2 pl-4 text-right text-xs font-semibold text-muted-foreground uppercase tracking-wider h-10">
+                      Market Cap
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {loadingCoins
                     ? // Skeleton rows
                       Array.from({ length: 5 }).map((_, i) => (
-                        <tr
+                        <TableRow
                           key={i}
-                          className="border-b border-[rgba(255,255,255,0.04)] last:border-0 h-[56px] animate-pulse"
+                          className="border-b border-border/40 last:border-0 h-14"
                         >
-                          <td className="py-3 pr-4 flex items-center gap-sm">
-                            <div className="w-8 h-8 rounded-full bg-[rgba(255,255,255,0.03)]" />
-                            <div className="w-16 h-4 bg-[rgba(255,255,255,0.03)] rounded" />
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="w-12 h-4 bg-[rgba(255,255,255,0.03)] rounded ml-auto" />
-                          </td>
-                          <td className="py-3 px-4 text-right">
-                            <div className="w-10 h-4 bg-[rgba(255,255,255,0.03)] rounded ml-auto" />
-                          </td>
-                          <td className="py-3 pl-4 text-right">
-                            <div className="w-20 h-4 bg-[rgba(255,255,255,0.03)] rounded ml-auto" />
-                          </td>
-                        </tr>
+                          <TableCell className="py-3 pr-4">
+                            <div className="flex items-center gap-2">
+                              <Skeleton className="w-8 h-8 rounded-full" />
+                              <Skeleton className="w-16 h-4" />
+                            </div>
+                          </TableCell>
+                          <TableCell className="py-3 px-4 text-right">
+                            <Skeleton className="w-12 h-4 ml-auto" />
+                          </TableCell>
+                          <TableCell className="py-3 px-4 text-right">
+                            <Skeleton className="w-10 h-4 ml-auto" />
+                          </TableCell>
+                          <TableCell className="py-3 pl-4 text-right">
+                            <Skeleton className="w-20 h-4 ml-auto" />
+                          </TableCell>
+                        </TableRow>
                       ))
                     : coinsList.map((coin) => {
                         const change = coin.price_change_percentage_24h || 0;
                         const isPositive = change >= 0;
                         return (
-                          <tr
+                          <TableRow
                             key={coin.id}
-                            className="border-b border-[rgba(255,255,255,0.04)] last:border-0 hover:bg-[rgba(255,255,255,0.01)] transition-colors text-[14px] h-[56px] font-medium"
+                            className="border-b border-border/40 last:border-0 text-sm h-14 font-medium"
                           >
-                            <td className="py-3 pr-4 flex items-center gap-sm">
-                              <img
-                                src={coin.image}
-                                alt={coin.name}
-                                className="w-6 h-6 object-contain animate-fade-in"
-                              />
-                              <div>
-                                <span className="font-semibold text-white block">
-                                  {coin.name}
-                                </span>
-                                <span className="text-[12px] text-[rgba(255,255,255,0.48)] uppercase">
-                                  {coin.symbol}
-                                </span>
+                            <TableCell className="py-3 pr-4">
+                              <div className="flex items-center gap-2">
+                                <img
+                                  src={coin.image}
+                                  alt={coin.name}
+                                  className="w-6 h-6 object-contain animate-fade-in"
+                                />
+                                <div>
+                                  <span className="font-semibold text-foreground block">
+                                    {coin.name}
+                                  </span>
+                                  <span className="text-xs text-muted-foreground uppercase">
+                                    {coin.symbol}
+                                  </span>
+                                </div>
                               </div>
-                            </td>
-                            <td className="py-3 px-4 text-right font-semibold text-white">
-                              $
-                              {coin.current_price?.toLocaleString(undefined, {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 6,
-                              })}
-                            </td>
-                            <td
+                            </TableCell>
+                            <TableCell className="py-3 px-4 text-right font-semibold text-foreground">
+                              {formatFullCurrency(coin.current_price || 0)}
+                            </TableCell>
+                            <TableCell
                               className={`py-3 px-4 text-right font-semibold ${
-                                isPositive ? "text-[#22C55E]" : "text-[#EF4444]"
+                                isPositive
+                                  ? "text-emerald-500"
+                                  : "text-rose-500"
                               }`}
                             >
                               {isPositive ? "+" : ""}
                               {change.toFixed(2)}%
-                            </td>
-                            <td className="py-3 pl-4 text-right text-[rgba(255,255,255,0.72)] font-semibold">
-                              ${coin.market_cap?.toLocaleString()}
-                            </td>
-                          </tr>
+                            </TableCell>
+                            <TableCell className="py-3 pl-4 text-right text-muted-foreground font-semibold">
+                              {formatCompactCurrency(coin.market_cap || 0)}
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                </tbody>
-              </table>
-            </div>
-          </ScrollArea>
+                </TableBody>
+              </Table>
+            </ScrollArea>
+          </CardContent>
         </Card>
 
         {/* Refer your friend Card (4 cols) */}
-        <Card
-          variant="flat"
-          className="lg:col-span-4 p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col justify-between gap-md h-[400px]"
-        >
-          <div className="flex flex-col gap-xs">
-            <div className="flex items-center gap-xs text-[11px] font-semibold text-[#8B7CFF] tracking-wider uppercase">
-              <Share2 className="w-4 h-4" /> Refer & Earn
-            </div>
-            <h3 className="text-[18px] font-semibold text-white mt-1">
-              Invite Friends
-            </h3>
-            <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium leading-relaxed mt-1">
-              Invite your friends to Zeus Capital and earn up to{" "}
-              <span className="text-white font-semibold">5% commission</span> on
-              their ASIC mining contract yields.
-            </p>
-          </div>
-
-          {/* Referral link display */}
-          <div className="flex flex-col gap-2">
-            <span className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-              Your Referral Link
-            </span>
-            <div className="flex items-center gap-sm bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px] p-3">
-              <span className="text-[12px] text-white font-mono break-all grow select-all">
-                https://zeus.capital/ref/zc-389f2a
-              </span>
-              <button
-                onClick={handleCopyRef}
-                className="p-2 bg-[#111114] hover:bg-[#1D1D22] border border-[rgba(255,255,255,0.06)] rounded-[10px] text-[rgba(255,255,255,0.72)] hover:text-white transition-all text-xs"
-              >
-                {copiedRef ? "Copied" : <Copy className="w-3.5 h-3.5" />}
-              </button>
-            </div>
-          </div>
-
-          {/* Referral stats */}
-          <div className="flex items-center gap-md border-t border-[rgba(255,255,255,0.06)] pt-md">
-            <div className="flex-1 flex flex-col gap-1">
-              <span className="text-[11px] text-[rgba(255,255,255,0.48)] font-semibold uppercase tracking-wider">
-                Referred
-              </span>
-              <span className="text-[18px] font-semibold text-white">
-                12 Friends
-              </span>
-            </div>
-            <div className="h-8 w-[1px] bg-[rgba(255,255,255,0.06)]" />
-            <div className="flex-1 flex flex-col gap-1">
-              <span className="text-[11px] text-[rgba(255,255,255,0.48)] font-semibold uppercase tracking-wider">
-                Earned
-              </span>
-              <span className="text-[18px] font-semibold text-[#22C55E]">
-                $1,250.00 USDH
-              </span>
-            </div>
-          </div>
-        </Card>
+        <ReferralCard />
       </div>
     </div>
   );

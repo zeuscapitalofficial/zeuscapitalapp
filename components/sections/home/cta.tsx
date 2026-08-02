@@ -1,46 +1,26 @@
-import { ArrowRight } from "lucide-react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { CreditCardIcon, ArrowRightIcon } from "lucide-react";
 
 export function CtaSection() {
   return (
-    <section className="py-3xl px-md max-w-[88rem] mx-auto w-full">
-      <Card
-        variant="dark"
-        size="large"
-        className="text-center flex flex-col items-center gap-lg"
-      >
-        <span className="text-[13px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,0.6)]">
-          Secure your account
-        </span>
-        <h2 className="text-[40px] sm:text-[56px] font-semibold tracking-[-0.03em] leading-tight text-white max-w-4xl">
+    <div className="relative mx-auto flex w-full max-w-6xl flex-col justify-between gap-y-6 rounded-4xl border bg-card px-4 py-8 shadow-sm md:py-10 dark:bg-card/50">
+      <div className="space-y-2">
+        <h2 className="text-center font-semibold text-lg tracking-tight md:text-2xl">
           Begin compounding digital asset wealth.
         </h2>
-        <p className="text-[16px] md:text-[18px] text-[rgba(255,255,255,0.7)] max-w-5xl mb-md">
-          Establish a secure private custody account or contract active hashrate
-          capacity within minutes. Contact our desk for institutional sizes.
+        <p className="text-balance text-center text-muted-foreground text-sm md:text-base">
+          Establish a private multi-sig custody account or contract active
+          hashrate capacity today.
         </p>
-        <div className="flex flex-col sm:flex-row gap-md">
-          <Link href="/register">
-            <Button
-              variant="primary"
-              className="bg-white text-black hover:bg-neutral-100"
-              icon={<ArrowRight size={16} />}
-            >
-              Establish Account
-            </Button>
-          </Link>
-          <Link href="/contact">
-            <Button
-              variant="secondary"
-              className="bg-transparent text-white border-white/20 hover:bg-white/5 hover:border-white/40"
-            >
-              Contact OTC Desk
-            </Button>
-          </Link>
-        </div>
-      </Card>
-    </section>
+      </div>
+      <div className="flex items-center justify-center gap-2">
+        <Button className="" variant="secondary">
+          Contact OTC Desk
+        </Button>
+        <Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">
+          Open Custody Account <ArrowRightIcon data-icon="inline-end" />
+        </Button>
+      </div>
+    </div>
   );
 }

@@ -54,30 +54,47 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { userId, role } = body;
+    const { userId, role, balance, totalProfit, bonusRewards, totalDeposit } = body;
 
-    if (!userId || !role) {
+    if (!userId) {
       return NextResponse.json(
-        { error: "Missing parameters" },
+        { error: "userId is required" },
         { status: 400 },
       );
     }
 
-    if (role !== "USER" && role !== "ADMIN") {
+    const updateData: Record<string, any> = {};
+
+    if (role) {
+      if (role !== "USER" && role !== "ADMIN") {
+        return NextResponse.json(
+          { error: "Invalid role specified" },
+          { status: 400 },
+        );
+      }
+      updateData.role = role;
+    }
+
+    if (typeof balance === "number") updateData.balance = balance;
+    if (typeof totalProfit === "number") updateData.totalProfit = totalProfit;
+    if (typeof bonusRewards === "number") updateData.bonusRewards = bonusRewards;
+    if (typeof totalDeposit === "number") updateData.totalDeposit = totalDeposit;
+
+    if (Object.keys(updateData).length === 0) {
       return NextResponse.json(
-        { error: "Invalid role specified" },
+        { error: "No valid fields to update" },
         { status: 400 },
       );
     }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { role },
+      data: updateData,
     });
 
     return NextResponse.json({ success: true, user: updatedUser });
   } catch (error: any) {
-    console.error("POST modify user role failed:", error);
+    console.error("POST modify user failed:", error);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 },

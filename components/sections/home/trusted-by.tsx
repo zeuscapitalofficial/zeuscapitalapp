@@ -1,82 +1,81 @@
 export function TrustedBySection() {
   const backers = [
     {
-      name: "Fundamental Labs",
+      name: "FUNDAMENTAL LABS",
       style: {
-        fontFamily: '"Times New Roman", Times, serif',
-        fontWeight: 400,
-        letterSpacing: "0.02em",
-        fontSize: "14px",
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
+        letterSpacing: "0.1em",
+        fontSize: "12px",
       },
     },
     {
       name: "KUCOIN",
       style: {
-        fontFamily: '"Arial Black", sans-serif',
-        fontWeight: 900,
-        letterSpacing: "0.08em",
-        fontSize: "16px",
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
+        letterSpacing: "0.15em",
+        fontSize: "12px",
       },
     },
     {
       name: "NGC",
       style: {
-        fontFamily: 'Impact, "Arial Narrow", sans-serif',
-        fontWeight: 700,
-        letterSpacing: "0.05em",
-        fontSize: "18px",
-      },
-    },
-    {
-      name: "NxGen",
-      style: {
-        fontFamily: "Georgia, serif",
+        fontFamily: "var(--font-sans)",
         fontWeight: 600,
-        letterSpacing: "-0.02em",
-        fontSize: "17px",
+        letterSpacing: "0.08em",
+        fontSize: "12px",
       },
     },
     {
-      name: "Matter Labs",
+      name: "NXGEN",
       style: {
-        fontFamily: "Helvetica, Arial, sans-serif",
-        fontWeight: 700,
-        letterSpacing: "-0.01em",
-        fontSize: "15px",
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
+        letterSpacing: "0.12em",
+        fontSize: "12px",
       },
     },
     {
-      name: "DEXTools",
+      name: "MATTER LABS",
       style: {
-        fontFamily: "Verdana, sans-serif",
-        fontWeight: 700,
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
+        letterSpacing: "0.1em",
+        fontSize: "12px",
+      },
+    },
+    {
+      name: "DEXTOOLS",
+      style: {
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
         letterSpacing: "0.06em",
-        fontSize: "14px",
-        textTransform: "uppercase" as const,
+        fontSize: "12px",
       },
     },
     {
       name: "NGRAVE",
       style: {
-        fontFamily: '"Courier New", Courier, monospace',
-        fontWeight: 700,
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
         letterSpacing: "0.18em",
-        fontSize: "14px",
+        fontSize: "12px",
       },
     },
     {
-      name: "Polychain",
+      name: "POLYCHAIN",
       style: {
-        fontFamily: 'Palatino, "Book Antiqua", serif',
-        fontWeight: 500,
-        letterSpacing: "0.03em",
-        fontSize: "15px",
+        fontFamily: "var(--font-sans)",
+        fontWeight: 600,
+        letterSpacing: "0.14em",
+        fontSize: "12px",
       },
     },
   ];
 
   return (
-    <section className="bg-background px-lg py-xl border-t border-b border-[rgba(0,0,0,0.04)] w-full overflow-hidden">
+    <section className="bg-background px-lg py-xl w-full overflow-hidden">
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -95,10 +94,10 @@ export function TrustedBySection() {
       <div className="max-w-[88rem] mx-auto grid grid-cols-1 md:grid-cols-4 gap-lg items-center">
         {/* Left Column (1/4) */}
         <div className="md:col-span-1">
-          <p className="text-text-secondary text-[16px] leading-relaxed font-semibold">
-            Funded by premier partners
+          <p className="text-text-secondary text-[20px] leading-relaxed font-semibold font-serif italic max-w-118 ">
+            Backed by institutional
             <br />
-            and forward-thinking leaders.
+            partners and custody networks.
           </p>
         </div>
 
@@ -113,7 +112,7 @@ export function TrustedBySection() {
             {backers.map((backer, idx) => (
               <span
                 key={`backer-1-${backer.name}`}
-                className="mx-lg shrink-0 text-text-secondary whitespace-nowrap opacity-60 hover:opacity-100 transition-opacity duration-150"
+                className="mx-lg shrink-0 text-zinc-500 whitespace-nowrap opacity-60 hover:opacity-100 transition-opacity duration-150"
                 style={backer.style}
               >
                 {backer.name}
@@ -123,7 +122,7 @@ export function TrustedBySection() {
             {backers.map((backer, idx) => (
               <span
                 key={`backer-2-${backer.name}`}
-                className="mx-lg shrink-0 text-text-secondary whitespace-nowrap opacity-60 hover:opacity-100 transition-opacity duration-150"
+                className="mx-lg shrink-0 text-zinc-500 whitespace-nowrap opacity-60 hover:opacity-100 transition-opacity duration-150"
                 style={backer.style}
               >
                 {backer.name}

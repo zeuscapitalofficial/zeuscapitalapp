@@ -17,10 +17,8 @@ export function SecuritySection() {
               Sovereignty over your digital capital.
             </h2>
             <p className="text-[16px] md:text-[18px] leading-relaxed text-[rgba(255,255,255,0.7)] max-w-4xl">
-              We combine Multi-Party Computation (MPC) with offline HSM-secured
-              cold storage vaults. This completely eliminates single-point
-              failures, preventing network breaches from compromising offline
-              reserves.
+              We combine multi-signature security protocols with military-grade offline vaults. 
+              This completely eliminates single-point failures, preventing network breaches from compromising reserves.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-md mt-md">

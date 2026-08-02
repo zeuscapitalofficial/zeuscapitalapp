@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
 export type DashboardAccent =
   | "purple"
@@ -20,17 +15,10 @@ interface AccentContextValue {
   setAccent: (accent: DashboardAccent) => void;
 }
 
-const AccentContext = createContext<
-  AccentContextValue | undefined
->(undefined);
+const AccentContext = createContext<AccentContextValue | undefined>(undefined);
 
-export function AccentProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const [accent, setAccent] =
-    useState<DashboardAccent>("purple");
+export function AccentProvider({ children }: { children: React.ReactNode }) {
+  const [accent, setAccent] = useState<DashboardAccent>("purple");
 
   useEffect(() => {
     const saved = localStorage.getItem("dashboard-accent");
@@ -43,10 +31,7 @@ export function AccentProvider({
   useEffect(() => {
     document.documentElement.dataset.accent = accent;
 
-    localStorage.setItem(
-      "dashboard-accent",
-      accent
-    );
+    localStorage.setItem("dashboard-accent", accent);
   }, [accent]);
 
   return (

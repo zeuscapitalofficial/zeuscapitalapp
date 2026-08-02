@@ -1,234 +1,520 @@
 "use client";
 
+import { useEffect, useState, useCallback } from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
+  Check,
+  Clock,
+  Copy,
   Cpu,
-  ExternalLink,
+  Eye,
   History,
+  Loader2,
+  RefreshCw,
   Search,
-  TrendingUp,
+  ShieldCheck,
+  X,
 } from "lucide-react";
-import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-const mockSystemLedger = [
-  {
-    id: "tx-701",
-    user: "August Renner",
-    email: "august@renner.net",
-    type: "payout",
-    asset: "Bitcoin (BTC)",
-    amount: "+0.0125 BTC",
-    value: "+$854.20",
-    status: "success",
-    date: "July 8, 2026",
-  },
-  {
-    id: "tx-702",
-    user: "Eleanor Vance",
-    email: "eleanor@vance.io",
-    type: "deposit",
-    asset: "USD Halo (USDH)",
-    amount: "+$5,000.00",
-    value: "+$5,000.00",
-    status: "success",
-    date: "July 8, 2026",
-  },
-  {
-    id: "tx-703",
-    user: "Marcus Brody",
-    email: "marcus@brody.com",
-    type: "withdrawal",
-    asset: "USD Halo (USDH)",
-    amount: "-$1,200.00",
-    value: "-$1,200.00",
-    status: "success",
-    date: "July 7, 2026",
-  },
-  {
-    id: "tx-704",
-    user: "Siddharth Rao",
-    email: "sid@rao.org",
-    type: "payout",
-    asset: "Bitcoin (BTC)",
-    amount: "+0.0084 BTC",
-    value: "+$574.90",
-    status: "success",
-    date: "July 7, 2026",
-  },
-  {
-    id: "tx-705",
-    user: "Emma Watson",
-    email: "emma@watson.co.uk",
-    type: "deposit",
-    asset: "USD Halo (USDH)",
-    amount: "+$25,000.00",
-    value: "+$25,000.00",
-    status: "pending",
-    date: "July 6, 2026",
-  },
-];
+interface AdminTxUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface AdminTransaction {
+  id: string;
+  userId: string;
+  type: string;
+  asset: string;
+  amount: number;
+  txHash?: string | null;
+  address?: string | null;
+  status: string;
+  createdAt: string;
+  user: AdminTxUser;
+}
 
 export default function AdminTransactionsPage() {
+  const [transactions, setTransactions] = useState<AdminTransaction[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
+  const [processingId, setProcessingId] = useState<string | null>(null);
+  const [selectedTx, setSelectedTx] = useState<AdminTransaction | null>(null);
+  const [copiedHash, setCopiedHash] = useState(false);
 
-  const filteredTxs = mockSystemLedger.filter((tx) => {
-    const matchesFilter = filter === "all" || tx.type === filter;
+  const fetchTransactions = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/admin/transactions");
+      if (res.ok) {
+        const data = await res.json();
+        setTransactions(data.transactions || []);
+      } else {
+        toast.error("Failed to load global transactions ledger");
+      }
+    } catch (err) {
+      console.error("Failed to fetch transactions:", err);
+      toast.error("Network error while fetching transactions");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchTransactions();
+  }, [fetchTransactions]);
+
+  const handleProcessTransaction = async (
+    transactionId: string,
+    newStatus: "COMPLETED" | "REJECTED"
+  ) => {
+    setProcessingId(transactionId);
+    try {
+      const res = await fetch("/api/admin/transactions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionId, status: newStatus }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Action failed");
+      }
+
+      setTransactions((prev) =>
+        prev.map((t) => (t.id === transactionId ? { ...t, status: newStatus } : t))
+      );
+
+      if (newStatus === "COMPLETED") {
+        toast.success("Transaction approved! Balance updated.");
+      } else {
+        toast.info("Transaction declined.");
+      }
+
+      if (selectedTx?.id === transactionId) {
+        setSelectedTx((prev) => (prev ? { ...prev, status: newStatus } : null));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to process transaction.");
+    } finally {
+      setProcessingId(null);
+    }
+  };
+
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedHash(true);
+    toast.success("Copied to clipboard!");
+    setTimeout(() => setCopiedHash(false), 2000);
+  };
+
+  const filteredTxs = transactions.filter((tx) => {
+    const matchesFilter =
+      filter === "all"
+        ? true
+        : tx.type.toLowerCase() === filter.toLowerCase();
+
     const matchesSearch =
-      tx.user.toLowerCase().includes(search.toLowerCase()) ||
-      tx.email.toLowerCase().includes(search.toLowerCase()) ||
-      tx.id.toLowerCase().includes(search.toLowerCase());
+      tx.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      tx.user?.email?.toLowerCase().includes(search.toLowerCase()) ||
+      tx.asset.toLowerCase().includes(search.toLowerCase()) ||
+      tx.id.toLowerCase().includes(search.toLowerCase()) ||
+      (tx.txHash && tx.txHash.toLowerCase().includes(search.toLowerCase()));
+
     return matchesFilter && matchesSearch;
   });
 
+  const totalVolume = transactions.reduce((acc, t) => acc + (t.amount || 0), 0);
+  const depositVolume = transactions
+    .filter((t) => t.type === "DEPOSIT" && t.status === "COMPLETED")
+    .reduce((acc, t) => acc + (t.amount || 0), 0);
+  const withdrawalVolume = transactions
+    .filter((t) => t.type === "WITHDRAWAL" && t.status === "COMPLETED")
+    .reduce((acc, t) => acc + (t.amount || 0), 0);
+
   return (
-    <div className="flex flex-col gap-lg select-none font-sans text-white bg-[#09090B] min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-[rgba(255,255,255,0.06)] pb-lg">
-        <div className="flex flex-col gap-2">
-          <span className="text-[12px] font-semibold text-red-400 uppercase tracking-wider">
-            Ledger & Audits
-          </span>
-          <h1 className="text-[32px] md:text-[36px] font-semibold tracking-[-0.03em] leading-tight text-white animate-fade-in">
-            Ledger Registry
+    <div className="space-y-6 w-full max-w-full font-sans pb-12 overflow-x-hidden">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-sky-500 uppercase tracking-wider">
+              System Audit
+            </span>
+            <Badge variant="outline" className="text-[10px] bg-sky-500/10 text-sky-600 border-sky-500/30 font-mono">
+              Live DB
+            </Badge>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight mt-1">
+            Global Ledger Registry
           </h1>
-          <p className="text-[15px] text-zinc-400 font-medium">
-            Search, filter, and audit global cryptocurrency deposit
-            transactions, outbound withdrawals, and mining yield allocations.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-120">
+            Search, filter, and audit global cryptocurrency deposits, withdrawals, purchase orders, and automated levies.
           </p>
         </div>
+
+        <Button
+          onClick={fetchTransactions}
+          disabled={loading}
+          variant="outline"
+          size="sm"
+          className="h-9 text-xs gap-1.5 cursor-pointer shrink-0 self-start md:self-center"
+        >
+          <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+          Refresh Ledger
+        </Button>
+      </div>
+
+      {/* Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+        <Card className="p-4 border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+            <span>Total Ledger Entries</span>
+            <History className="size-4 text-sky-500" />
+          </div>
+          <div className="text-xl sm:text-2xl font-bold text-foreground mt-2">
+            {transactions.length} Transaction{transactions.length === 1 ? "" : "s"}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            ${totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2 })} aggregated volume
+          </p>
+        </Card>
+
+        <Card className="p-4 border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+            <span>Completed Deposits</span>
+            <ArrowDownLeft className="size-4 text-emerald-500" />
+          </div>
+          <div className="text-xl sm:text-2xl font-bold text-emerald-600 mt-2">
+            ${depositVolume.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            Funded platform liquidity
+          </p>
+        </Card>
+
+        <Card className="p-4 border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+            <span>Completed Withdrawals</span>
+            <ArrowUpRight className="size-4 text-rose-500" />
+          </div>
+          <div className="text-xl sm:text-2xl font-bold text-foreground mt-2">
+            ${withdrawalVolume.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            Total outbound payouts
+          </p>
+        </Card>
       </div>
 
       {/* Search and Filters */}
-      <div className="flex flex-col sm:flex-row gap-md items-center justify-between">
-        <div className="flex items-center gap-xs bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[14px] px-3 py-2 w-full sm:w-[320px]">
-          <Search className="w-4 h-4 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Search by user name, email, or TX..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="bg-transparent border-none text-[13px] text-white focus:outline-none placeholder-zinc-500 w-full"
-          />
-        </div>
-
-        <div className="flex bg-[#111114] border border-[rgba(255,255,255,0.06)] p-0.5 rounded-[12px] overflow-x-auto w-full sm:w-auto">
-          {["all", "deposit", "withdrawal", "payout"].map((tab) => (
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex p-1 rounded-xl bg-muted border border-border overflow-x-auto max-w-full">
+          {[
+            { id: "all", label: "All Ledger Entries" },
+            { id: "deposit", label: "Deposits" },
+            { id: "withdrawal", label: "Withdrawals" },
+            { id: "purchase", label: "Purchases" },
+            { id: "stamp_duty", label: "Stamp Duty" },
+            { id: "taxation", label: "Taxation" },
+          ].map((tab) => (
             <button
-              key={tab}
-              onClick={() => setFilter(tab)}
-              className={`px-3 py-1 text-[11px] font-semibold rounded-[10px] capitalize transition-all shrink-0 ${
-                filter === tab
-                  ? "bg-[#1D1D22] text-white"
-                  : "text-zinc-500 hover:text-white"
+              key={tab.id}
+              onClick={() => setFilter(tab.id)}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                filter === tab.id
+                  ? "bg-accent-foreground text-background shadow-xs font-bold"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              {tab === "all" ? "All System" : tab + "s"}
+              {tab.label}
             </button>
           ))}
         </div>
+
+        <div className="relative w-full lg:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search user, email, txHash..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9 text-xs bg-card border-border text-foreground w-full"
+          />
+        </div>
       </div>
 
-      {/* Table Ledger */}
-      <Card
-        variant="flat"
-        className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse select-none">
-            <thead>
-              <tr className="border-b border-[rgba(255,255,255,0.04)] text-[12px] font-semibold text-zinc-500 uppercase tracking-wider h-[40px]">
-                <th className="py-2 pr-4">User Details</th>
-                <th className="py-2 px-4">TX Reference</th>
-                <th className="py-2 px-4">Ledger Type</th>
-                <th className="py-2 px-4 text-right">Amount</th>
-                <th className="py-2 px-4 text-right">Value (USD)</th>
-                <th className="py-2 px-4">Status</th>
-                <th className="py-2 pl-4 text-right">Date</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTxs.length > 0 ? (
-                filteredTxs.map((tx) => (
-                  <tr
-                    key={tx.id}
-                    className="border-b border-[rgba(255,255,255,0.04)] last:border-0 hover:bg-[rgba(255,255,255,0.01)] transition-colors text-[14px] h-[56px] font-medium"
-                  >
-                    <td className="py-3 pr-4">
-                      <span className="font-semibold text-white block">
-                        {tx.user}
-                      </span>
-                      <span className="text-[12px] text-zinc-500 block">
-                        {tx.email}
-                      </span>
-                    </td>
-                    <td className="py-3 px-4 font-mono text-[13px] text-zinc-500">
-                      {tx.id}
-                    </td>
-                    <td className="py-3 px-4 text-zinc-300 capitalize font-semibold flex items-center gap-2 mt-1.5 border-0">
-                      {tx.type === "payout" ? (
-                        <Cpu className="w-3.5 h-3.5 text-red-400" />
-                      ) : tx.type === "deposit" ? (
-                        <ArrowDownLeft className="w-3.5 h-3.5 text-green-400" />
-                      ) : (
-                        <ArrowUpRight className="w-3.5 h-3.5 text-yellow-400" />
-                      )}
-                      {tx.type}
-                    </td>
-                    <td
-                      className={`py-3 px-4 text-right font-semibold ${
-                        tx.amount.startsWith("+")
-                          ? "text-[#22C55E]"
-                          : "text-[#EF4444]"
-                      }`}
-                    >
-                      {tx.amount}
-                    </td>
-                    <td
-                      className={`py-3 px-4 text-right font-semibold ${
-                        tx.value.startsWith("+")
-                          ? "text-[#22C55E]"
-                          : "text-[#EF4444]"
-                      }`}
-                    >
-                      {tx.value}
-                    </td>
-                    <td className="py-3 px-4">
-                      <span
-                        className={`inline-flex items-center gap-xs px-2.5 py-0.5 rounded-[99px] text-[12px] font-semibold ${
-                          tx.status === "success"
-                            ? "bg-green-500/10 text-[#22C55E]"
-                            : "bg-yellow-500/10 text-[#F59E0B]"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${tx.status === "success" ? "bg-[#22C55E]" : "bg-[#F59E0B]"}`}
-                        />
-                        {tx.status}
-                      </span>
-                    </td>
-                    <td className="py-3 pl-4 text-right text-zinc-500">
-                      {tx.date}
-                    </td>
-                  </tr>
+      {/* Table Ledger Card */}
+      <Card className="border-border bg-card shadow-xs overflow-hidden max-w-full">
+        <CardHeader className="border-b border-border py-3.5 px-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-bold text-foreground">
+            System Ledger Transactions
+          </CardTitle>
+          <span className="text-xs text-muted-foreground font-mono">
+            {filteredTxs.length} item{filteredTxs.length === 1 ? "" : "s"}
+          </span>
+        </CardHeader>
+
+        <CardContent className="p-0 overflow-x-auto w-full max-w-full">
+          <Table className="w-full min-w-[780px] whitespace-nowrap">
+            <TableHeader>
+              <TableRow className="border-border bg-muted/30">
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">User Details</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Type</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Asset / Details</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Amount (USD)</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">TxID Reference</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Status</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3 text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 5 }).map((_, i) => (
+                  <TableRow key={i} className="h-14 border-border">
+                    <TableCell><Skeleton className="h-8 w-36" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-28" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-7 w-20 ml-auto" /></TableCell>
+                  </TableRow>
                 ))
+              ) : filteredTxs.length > 0 ? (
+                filteredTxs.map((tx) => {
+                  const isDeposit = tx.type.toUpperCase() === "DEPOSIT";
+                  const isPending = tx.status.toUpperCase() === "PENDING";
+                  const isCompleted = tx.status.toUpperCase() === "COMPLETED";
+                  const isProcessing = processingId === tx.id;
+
+                  const txHashDisplay = tx.txHash
+                    ? tx.txHash.length > 14
+                      ? `${tx.txHash.slice(0, 8)}...${tx.txHash.slice(-4)}`
+                      : tx.txHash
+                    : "N/A";
+
+                  return (
+                    <TableRow key={tx.id} className="border-border hover:bg-muted/40 transition-colors text-xs font-medium">
+                      <TableCell className="py-3">
+                        <div>
+                          <span className="font-bold text-foreground block truncate max-w-[180px]">
+                            {tx.user?.name || "Anonymous User"}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground block truncate max-w-[180px]">
+                            {tx.user?.email || tx.userId}
+                          </span>
+                        </div>
+                      </TableCell>
+
+                      <TableCell className="py-3">
+                        <Badge variant="outline" className={`text-[10px] font-semibold ${
+                          isDeposit
+                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                            : tx.type === "WITHDRAWAL"
+                            ? "bg-purple-500/10 text-purple-600 border-purple-500/30"
+                            : "bg-blue-500/10 text-blue-600 border-blue-500/30"
+                        }`}>
+                          {tx.type}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="py-3 font-semibold text-foreground">
+                        {tx.asset}
+                      </TableCell>
+
+                      <TableCell className="py-3 font-bold">
+                        <span className={isDeposit ? "text-emerald-500" : "text-foreground"}>
+                          {isDeposit ? "+" : "-"}${tx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </span>
+                      </TableCell>
+
+                      <TableCell className="py-3 font-mono text-[11px] text-muted-foreground">
+                        {txHashDisplay}
+                      </TableCell>
+
+                      <TableCell className="py-3">
+                        <Badge
+                          variant="secondary"
+                          className={`text-[10px] font-semibold capitalize border ${
+                            isPending
+                              ? "bg-amber-500/10 text-amber-600 border-amber-500/30"
+                              : isCompleted
+                              ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
+                              : "bg-rose-500/10 text-rose-600 border-rose-500/30"
+                          }`}
+                        >
+                          {tx.status.toLowerCase()}
+                        </Badge>
+                      </TableCell>
+
+                      <TableCell className="py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => setSelectedTx(tx)}
+                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            title="Inspect Details"
+                          >
+                            <Eye className="size-3.5" />
+                          </Button>
+
+                          {isPending && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleProcessTransaction(tx.id, "REJECTED")}
+                                disabled={isProcessing}
+                                className="h-7 px-2.5 text-[11px] font-bold text-rose-600 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer gap-1"
+                              >
+                                {isProcessing ? <Loader2 className="size-3 animate-spin" /> : <X className="size-3" />}
+                                Decline
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                onClick={() => handleProcessTransaction(tx.id, "COMPLETED")}
+                                disabled={isProcessing}
+                                className="h-7 px-2.5 text-[11px] font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer gap-1 shadow-xs"
+                              >
+                                {isProcessing ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />}
+                                Approve
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
               ) : (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-8 text-center text-zinc-400 text-sm"
-                  >
-                    No ledger matching filters found.
-                  </td>
-                </tr>
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-xs text-muted-foreground">
+                    No transactions matching your search criteria.
+                  </TableCell>
+                </TableRow>
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
+
+      {/* Transaction Details Modal */}
+      {selectedTx && (
+        <Dialog open={Boolean(selectedTx)} onOpenChange={(o) => !o && setSelectedTx(null)}>
+          <DialogContent className="max-w-lg bg-card border-border">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold text-foreground">
+                Transaction Audit Record
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                Detailed ledger entry for user account verification.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-4 pt-2 text-xs">
+              <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-2">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">User Name:</span>
+                  <span className="font-bold text-foreground">{selectedTx.user?.name}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">User Email:</span>
+                  <span className="font-mono text-foreground">{selectedTx.user?.email}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Transaction ID:</span>
+                  <span className="font-mono text-muted-foreground">{selectedTx.id}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Type & Asset:</span>
+                  <span className="font-bold text-foreground">{selectedTx.type} ({selectedTx.asset})</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Amount:</span>
+                  <span className="font-bold text-emerald-500">
+                    ${selectedTx.amount.toLocaleString(undefined, { minimumFractionDigits: 2 })} USD
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Submission Date:</span>
+                  <span>{new Date(selectedTx.createdAt).toLocaleString()}</span>
+                </div>
+              </div>
+
+              {selectedTx.txHash && (
+                <div className="space-y-1">
+                  <span className="text-muted-foreground font-semibold">TxHash Reference:</span>
+                  <div className="flex items-center gap-2 bg-background border border-border p-2 rounded-lg font-mono text-[11px]">
+                    <span className="truncate grow select-all">{selectedTx.txHash}</span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      onClick={() => handleCopy(selectedTx.txHash!)}
+                      className="size-6 shrink-0 cursor-pointer"
+                    >
+                      {copiedHash ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {selectedTx.address && (
+                <div className="space-y-1">
+                  <span className="text-muted-foreground font-semibold">Destination Wallet Address:</span>
+                  <div className="bg-background border border-border p-2 rounded-lg font-mono text-[11px] select-all">
+                    {selectedTx.address}
+                  </div>
+                </div>
+              )}
+
+              {selectedTx.status === "PENDING" && (
+                <div className="flex gap-2 pt-2 border-t border-border">
+                  <Button
+                    onClick={() => handleProcessTransaction(selectedTx.id, "REJECTED")}
+                    variant="outline"
+                    className="flex-1 text-xs h-9 font-bold text-rose-600 border-rose-500/30 hover:bg-rose-500/10 cursor-pointer"
+                  >
+                    Decline Request
+                  </Button>
+                  <Button
+                    onClick={() => handleProcessTransaction(selectedTx.id, "COMPLETED")}
+                    className="flex-1 text-xs h-9 font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer"
+                  >
+                    Approve & Credit Balance
+                  </Button>
+                </div>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

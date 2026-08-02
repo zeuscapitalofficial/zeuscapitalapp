@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { createNotification } from "@/lib/notifications";
 
 async function checkAdminSession() {
   const session = await auth.api.getSession({
@@ -53,15 +54,15 @@ export async function POST(request: Request) {
     });
 
     // Create automatic alert notification for the user
-    await prisma.notification.create({
-      data: {
-        userId: kyc.userId,
-        title: status === "APPROVED" ? "Identity Verified" : "Verification Rejected",
-        message: status === "APPROVED" 
+    await createNotification({
+      userId: kyc.userId,
+      title:
+        status === "APPROVED" ? "Identity Verified" : "Verification Rejected",
+      message:
+        status === "APPROVED"
           ? "Your AML/KYC compliance audit was approved. Account limits have been fully unlocked."
           : `Auditor feedback: ${rejectionReason || "Please verify document parameters and resubmit."}`,
-        type: status === "APPROVED" ? "SECURITY" : "WARNING"
-      }
+      type: status === "APPROVED" ? "SECURITY" : "WARNING",
     });
 
     return NextResponse.json({ success: true, kyc });

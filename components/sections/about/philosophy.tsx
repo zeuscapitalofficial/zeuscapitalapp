@@ -6,7 +6,7 @@ export function AboutPhilosophySection() {
           <span className="text-[13px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.4)]">
             Our Philosophy
           </span>
-          <h2 className="text-[40px] sm:text-[56px] font-semibold tracking-[-0.03em] leading-tight text-black">
+          <h2 className="text-[40px] sm:text-[56px] tracking-[-0.03em] leading-tight font-serif italic text-black">
             Our structural invariants.
           </h2>
         </div>

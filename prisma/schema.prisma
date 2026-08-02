@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -19,15 +17,29 @@ model User {
   emailVerified Boolean        @default(false)
   image         String?
   role          Role           @default(USER)
+  referralCode  String?        @unique
+  referredById  String?
+  referredBy    User?          @relation("UserReferrals", fields: [referredById], references: [id], onDelete: SetNull)
+  referrals     User[]         @relation("UserReferrals")
+  balance       Float          @default(0.0)
+  totalProfit   Float          @default(0.0)
+  totalDeposit  Float          @default(0.0)
+  bonusRewards  Float          @default(0.0)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   sessions      Session[]
   accounts      Account[]
   kyc           Kyc?
-  notifications Notification[]
-  apiKeys       ApiKey[]
+  notifications     Notification[]
+  apiKeys           ApiKey[]
+  chatConversations ChatConversation[]
+  transactions      Transaction[]
+  quests            UserQuest[]
+  streak            UserStreak?
+  paymentMethods    PaymentMethod[]
 
   @@unique([email])
+  @@index([referredById])
   @@map("user")
 }
 
@@ -158,4 +170,87 @@ model ApiKey {
 
   @@index([userId])
   @@map("api_key")
+}
+
+model ChatConversation {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject     String?
+  isOpen      Boolean       @default(true)
+  lastMessage String?
+  lastAt      DateTime      @default(now())
+  createdAt   DateTime      @default(now())
+  messages    ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_conversation")
+}
+
+model ChatMessage {
+  id             String           @id @default(uuid())
+  conversationId String
+  conversation   ChatConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  senderRole     Role
+  content        String
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
+
+  @@index([conversationId])
+  @@map("chat_message")
+}
+
+model Transaction {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // DEPOSIT, WITHDRAWAL, PURCHASE
+  asset     String   // e.g. "USDT (TRC-20)", "BTC"
+  amount    Float
+  txHash    String?
+  address   String?
+  status    String   @default("PENDING") // PENDING, COMPLETED, REJECTED
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("transaction")
+}
+
+model UserQuest {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  questId   String
+  completed Boolean  @default(false)
+  claimed   Boolean  @default(false)
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, questId])
+  @@map("user_quest")
+}
+
+model UserStreak {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentDay  Int      @default(1)
+  lastClaimAt DateTime @default(now())
+  claimedDays String   @default("[]") // JSON array of claimed day numbers e.g. "[1,2]"
+
+  @@map("user_streak")
+}
+
+model PaymentMethod {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String   // e.g. "BTC", "USDT_TRC20", "ETH", "BANK_TRANSFER"
+  label     String   // e.g. "Primary Trading Wallet", "Personal Ledger"
+  address   String   // Wallet address or Bank account details
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("payment_method")
 }

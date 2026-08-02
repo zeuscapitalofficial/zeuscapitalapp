@@ -10,10 +10,7 @@ export async function GET() {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const sessions = await prisma.session.findMany({
@@ -30,7 +27,7 @@ export async function GET() {
 
     // Mark current session
     const currentSessionId = session.session?.id;
-    const sessionsWithCurrent = sessions.map(s => ({
+    const sessionsWithCurrent = sessions.map((s) => ({
       ...s,
       current: s.id === currentSessionId,
     }));

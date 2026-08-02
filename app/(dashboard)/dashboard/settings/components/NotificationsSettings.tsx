@@ -1,15 +1,35 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Bell, Mail, Smartphone, Moon, Sun, Shield, DollarSign, TrendingUp, Activity, UserCheck } from "lucide-react";
+import {
+  Bell,
+  BellOff,
+  Mail,
+  Shield,
+  DollarSign,
+  TrendingUp,
+  UserCheck,
+  Save,
+  Loader2,
+  Moon,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { useSession } from "@/lib/auth-client";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { useTranslation } from "@/lib/i18n/i18n-context";
 
 interface NotificationPreferences {
+  isDndActive: boolean;
   emailEnabled: boolean;
   pushEnabled: boolean;
   securityAlerts: boolean;
@@ -19,26 +39,16 @@ interface NotificationPreferences {
   withdrawalAlerts: boolean;
   referralAlerts: boolean;
   marketingEmails: boolean;
-  doNotDisturb: boolean;
-  dndStart: string;
-  dndEnd: string;
 }
 
-const notificationCategories = [
-  { key: "securityAlerts", label: "Security Alerts", description: "Login attempts, password changes, 2FA events", icon: Shield },
-  { key: "transactionAlerts", label: "Transaction Alerts", description: "Deposits, withdrawals, transfers", icon: DollarSign },
-  { key: "miningAlerts", label: "Mining Alerts", description: "Rewards, plan changes, hashrate updates", icon: TrendingUp },
-  { key: "depositAlerts", label: "Deposit Confirmations", description: "When funds arrive in your wallet", icon: DollarSign },
-  { key: "withdrawalAlerts", label: "Withdrawal Updates", description: "Status changes, completions, failures", icon: DollarSign },
-  { key: "referralAlerts", label: "Referral Activity", description: "New referrals, earnings, milestones", icon: UserCheck },
-  { key: "marketingEmails", label: "Marketing Emails", description: "Product updates, promotions, newsletters", icon: Mail },
-];
-
 export function NotificationsSettings() {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { t } = useTranslation();
+  const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
+
   const [preferences, setPreferences] = useState<NotificationPreferences>({
-    emailEnabled: true,
+    isDndActive: false,
+    emailEnabled: false,
     pushEnabled: true,
     securityAlerts: true,
     transactionAlerts: true,
@@ -47,37 +57,81 @@ export function NotificationsSettings() {
     withdrawalAlerts: true,
     referralAlerts: true,
     marketingEmails: false,
-    doNotDisturb: false,
-    dndStart: "22:00",
-    dndEnd: "08:00",
   });
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchPreferences();
-  }, [user]);
-
-  const fetchPreferences = async () => {
-    if (!user) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/user/settings/notifications");
-      if (res.ok) {
-        const data = await res.json();
-        if (data.preferences) {
-          setPreferences(prev => ({ ...prev, ...data.preferences }));
+    async function fetchPreferences() {
+      try {
+        setLoading(true);
+        const res = await fetch("/api/user/settings/notifications");
+        if (res.ok) {
+          const data = await res.json();
+          if (data.preferences) {
+            setPreferences((prev) => ({
+              ...prev,
+              ...data.preferences,
+            }));
+          }
         }
+      } catch (err) {
+        console.error("Failed to load notification settings:", err);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch notification preferences:", error);
-    } finally {
-      setLoading(false);
+    }
+    fetchPreferences();
+  }, []);
+
+  const handleToggleDnd = async (checked: boolean) => {
+    const nextPrefs: NotificationPreferences = checked
+      ? {
+          isDndActive: true,
+          emailEnabled: false,
+          pushEnabled: false,
+          securityAlerts: false,
+          transactionAlerts: false,
+          miningAlerts: false,
+          depositAlerts: false,
+          withdrawalAlerts: false,
+          referralAlerts: false,
+          marketingEmails: false,
+        }
+      : {
+          isDndActive: false,
+          emailEnabled: false,
+          pushEnabled: true,
+          securityAlerts: true,
+          transactionAlerts: true,
+          miningAlerts: true,
+          depositAlerts: true,
+          withdrawalAlerts: true,
+          referralAlerts: true,
+          marketingEmails: false,
+        };
+
+    setPreferences(nextPrefs);
+    toast.info(checked ? "Do Not Disturb (DND) Activated" : "Notifications Restored");
+
+    try {
+      await fetch("/api/user/settings/notifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(nextPrefs),
+      });
+    } catch (err) {
+      console.error("Failed to save DND setting:", err);
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const toggle = (key: keyof NotificationPreferences) => {
+    if (preferences.isDndActive) {
+      toast.error("Turn off Do Not Disturb (DND) mode to customize individual notifications.");
+      return;
+    }
+    setPreferences((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleSave = async () => {
     setSaving(true);
     try {
       const res = await fetch("/api/user/settings/notifications", {
@@ -86,160 +140,214 @@ export function NotificationsSettings() {
         body: JSON.stringify(preferences),
       });
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to save preferences");
-
-      toast.success("Notification preferences saved");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save preferences");
+      if (!res.ok) throw new Error("Failed to save notification preferences");
+      toast.success("Notification preferences saved successfully");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to save preferences.");
     } finally {
       setSaving(false);
     }
   };
 
-  const togglePreference = (key: keyof NotificationPreferences) => {
-    setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  if (loading) {
-    return (
-      <Card variant="flat" className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] max-w-[620px]">
-        <div className="flex items-center justify-center py-xl">
-          <Loader2 className="w-6 h-6 animate-spin text-[#8B7CFF]" />
-        </div>
-      </Card>
-    );
-  }
+  const categories = [
+    {
+      key: "securityAlerts" as const,
+      label: "Security & Login Alerts",
+      desc: "Instant alerts on new device logins, password resets, and 2FA changes.",
+      icon: Shield,
+    },
+    {
+      key: "transactionAlerts" as const,
+      label: "Financial Transactions",
+      desc: "Confirmations for deposits, withdrawals, and balance transfers.",
+      icon: DollarSign,
+    },
+    {
+      key: "miningAlerts" as const,
+      label: "Mining & Hashrate Updates",
+      desc: "Daily payout credits, plan completions, and hardware telemetry.",
+      icon: TrendingUp,
+    },
+    {
+      key: "referralAlerts" as const,
+      label: "Referral Program Earnings",
+      desc: "Notifications when a referred user signs up or earns a commission bonus.",
+      icon: UserCheck,
+    },
+    {
+      key: "marketingEmails" as const,
+      label: "Platform Updates & Newsletters",
+      desc: "Occasional announcements on new mining algorithms and platform features.",
+      icon: Mail,
+    },
+  ];
 
   return (
-    <Card variant="flat" className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] max-w-[620px] flex flex-col gap-lg">
-      <div className="flex items-center gap-xs">
-        <Bell className="w-5 h-5 text-[#8B7CFF]" />
-        <h3 className="text-[18px] font-semibold text-white">Notifications</h3>
-      </div>
-
-      <form className="flex flex-col gap-lg" onSubmit={handleSubmit}>
-        {/* Delivery Channels */}
-        <div className="space-y-md pt-md border-t border-[rgba(255,255,255,0.06)]">
-          <h4 className="text-[14px] font-semibold text-[rgba(255,255,255,0.72)]">Delivery Channels</h4>
-          <div className="space-y-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <Mail className="w-5 h-5 text-[rgba(255,255,255,0.48)]" />
-                <div>
-                  <p className="text-[14px] font-medium text-white">Email Notifications</p>
-                  <p className="text-[12px] text-[rgba(255,255,255,0.48)]">Receive notifications via email</p>
-                </div>
-              </div>
-              <Switch
-                checked={preferences.emailEnabled}
-                onCheckedChange={() => togglePreference("emailEnabled")}
-              />
+    <div className="space-y-6 w-full font-sans">
+      {/* Master Do Not Disturb (DND) Card Banner */}
+      <Card className={`border transition-all ${
+        preferences.isDndActive
+          ? "border-amber-500/50 bg-amber-500/10 shadow-md"
+          : "border-border bg-card"
+      }`}>
+        <CardContent className="p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className={`size-10 rounded-xl flex items-center justify-center shrink-0 ${
+              preferences.isDndActive
+                ? "bg-amber-500 text-black font-bold"
+                : "bg-muted text-muted-foreground"
+            }`}>
+              {preferences.isDndActive ? (
+                <Moon className="size-5 fill-current" />
+              ) : (
+                <BellOff className="size-5" />
+              )}
             </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <Smartphone className="w-5 h-5 text-[rgba(255,255,255,0.48)]" />
-                <div>
-                  <p className="text-[14px] font-medium text-white">Push Notifications</p>
-                  <p className="text-[12px] text-[rgba(255,255,255,0.48)]">Receive push notifications on your devices</p>
-                </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm text-foreground">
+                  {t("dnd_title", "Do Not Disturb (DND)")}
+                </span>
+                <Badge variant={preferences.isDndActive ? "default" : "outline"} className={`text-[10px] ${
+                  preferences.isDndActive ? "bg-amber-500 text-black font-bold border-none" : ""
+                }`}>
+                  {preferences.isDndActive
+                    ? t("dnd_active", "DND Active — All Notifications Silenced")
+                    : t("dnd_inactive", "Notifications Enabled")}
+                </Badge>
               </div>
-              <Switch
-                checked={preferences.pushEnabled}
-                onCheckedChange={() => togglePreference("pushEnabled")}
-              />
+              <p className="text-xs text-muted-foreground mt-0.5 max-w-120">
+                {t("dnd_desc", "Mute all in-app push banners, transactional alerts, and email notifications instantly.")}
+              </p>
             </div>
           </div>
-        </div>
 
-        {/* Notification Categories */}
-        <div className="space-y-md pt-md border-t border-[rgba(255,255,255,0.06)]">
-          <h4 className="text-[14px] font-semibold text-[rgba(255,255,255,0.72)]">Notification Categories</h4>
-          <div className="space-y-sm">
-            {notificationCategories.map(({ key, label, description, icon: Icon }) => (
-              <div key={key} className="flex items-center justify-between p-sm bg-[#09090B] border border-[rgba(255,255,255,0.06)] rounded-[14px]">
-                <div className="flex items-center gap-sm">
-                  <div className="bg-[#8B7CFF]/20 p-2 rounded-[10px]">
-                    <Icon className="w-5 h-5 text-[#8B7CFF]" />
-                  </div>
-                  <div>
-                    <p className="text-[14px] font-medium text-white">{label}</p>
-                    <p className="text-[12px] text-[rgba(255,255,255,0.48)]">{description}</p>
-                  </div>
-                </div>
-                <Switch
-                  checked={preferences[key as keyof NotificationPreferences] as boolean}
-                  onCheckedChange={() => togglePreference(key as keyof NotificationPreferences)}
-                  disabled={!preferences.emailEnabled && !preferences.pushEnabled}
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Do Not Disturb */}
-        <div className="space-y-md pt-md border-t border-[rgba(255,255,255,0.06)]">
-          <h4 className="text-[14px] font-semibold text-[rgba(255,255,255,0.72)]">Do Not Disturb</h4>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-sm">
-              <Moon className="w-5 h-5 text-[rgba(255,255,255,0.48)]" />
-              <div>
-                <p className="text-[14px] font-medium text-white">Enable Do Not Disturb</p>
-                <p className="text-[12px] text-[rgba(255,255,255,0.48)]">Silence all notifications during set hours</p>
-              </div>
-            </div>
+          <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+            <Label htmlFor="dnd-switch" className="text-xs font-semibold cursor-pointer">
+              {preferences.isDndActive ? "DND On" : "DND Off"}
+            </Label>
             <Switch
-              checked={preferences.doNotDisturb}
-              onCheckedChange={() => togglePreference("doNotDisturb")}
+              id="dnd-switch"
+              checked={preferences.isDndActive}
+              onCheckedChange={handleToggleDnd}
             />
           </div>
+        </CardContent>
+      </Card>
 
-          {preferences.doNotDisturb && (
-            <div className="grid grid-cols-2 gap-md ml-10">
-              <div className="flex flex-col gap-xs">
-                <Label htmlFor="dndStart" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                  Start Time
-                </Label>
-                <Input
-                  id="dndStart"
-                  type="time"
-                  value={preferences.dndStart}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, dndStart: e.target.value }))}
-                  className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white"
-                />
-              </div>
-              <div className="flex flex-col gap-xs">
-                <Label htmlFor="dndEnd" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                  End Time
-                </Label>
-                <Input
-                  id="dndEnd"
-                  type="time"
-                  value={preferences.dndEnd}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, dndEnd: e.target.value }))}
-                  className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white"
-                />
-              </div>
+      {/* Main Preferences Form */}
+      <Card className={`w-full shadow-xs border-border bg-card transition-opacity ${
+        preferences.isDndActive ? "opacity-60 pointer-events-none" : ""
+      }`}>
+        <CardHeader className="border-b border-border pb-4">
+          <div className="flex items-center gap-2.5">
+            <div className="size-8 rounded-lg bg-accent-foreground/10 text-accent-foreground flex items-center justify-center">
+              <Bell className="size-4" />
             </div>
-          )}
-        </div>
+            <div>
+              <CardTitle className="text-base font-bold text-foreground">Notification Preferences</CardTitle>
+              <CardDescription className="text-xs">
+                Choose how and when you receive security alerts and financial updates.
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
 
-        <Button
-          type="submit"
-          disabled={saving}
-          className="w-[180px] bg-[#8B7CFF] hover:bg-[#7A6BEA] text-white text-[13px] font-semibold h-10 rounded-[14px] mt-xs disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
+        <CardContent className="pt-5 space-y-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2">
+              <Loader2 className="size-4 animate-spin text-accent-foreground" />
+              Loading preferences...
+            </div>
           ) : (
-            "Save Preferences"
+            <>
+              {/* Global Channels */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="flex items-center justify-between p-3.5 rounded-lg border border-border bg-background">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-bold text-foreground block">Email Notifications</Label>
+                    <span className="text-[11px] text-muted-foreground">Receive updates via primary email</span>
+                  </div>
+                  <Switch
+                    disabled={preferences.isDndActive}
+                    checked={preferences.emailEnabled}
+                    onCheckedChange={() => toggle("emailEnabled")}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between p-3.5 rounded-lg border border-border bg-background">
+                  <div className="space-y-0.5">
+                    <Label className="text-xs font-bold text-foreground block">In-App Push Alerts</Label>
+                    <span className="text-[11px] text-muted-foreground">Receive real-time popups in header</span>
+                  </div>
+                  <Switch
+                    disabled={preferences.isDndActive}
+                    checked={preferences.pushEnabled}
+                    onCheckedChange={() => toggle("pushEnabled")}
+                  />
+                </div>
+              </div>
+
+              {/* Specific Event Types */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                  Notification Categories
+                </h4>
+
+                <div className="divide-y divide-border border border-border rounded-lg bg-background">
+                  {categories.map((cat) => {
+                    const Icon = cat.icon;
+                    return (
+                      <div key={cat.key} className="flex items-center justify-between p-3.5 gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="size-8 rounded-md bg-muted flex items-center justify-center text-foreground shrink-0">
+                            <Icon className="size-4" />
+                          </div>
+                          <div>
+                            <span className="text-xs font-semibold text-foreground block">
+                              {cat.label}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground block">
+                              {cat.desc}
+                            </span>
+                          </div>
+                        </div>
+
+                        <Switch
+                          disabled={preferences.isDndActive}
+                          checked={preferences[cat.key]}
+                          onCheckedChange={() => toggle(cat.key)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </>
           )}
-        </Button>
-      </form>
-    </Card>
+        </CardContent>
+
+        <CardFooter className="border-t border-border pt-4 justify-end mt-auto">
+          <Button
+            onClick={handleSave}
+            disabled={saving || loading || preferences.isDndActive}
+            className="bg-accent-foreground text-background hover:bg-accent-foreground/90 text-xs h-9 gap-1.5 cursor-pointer font-semibold"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="size-3.5" />
+                Save Preferences
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
+    </div>
   );
 }

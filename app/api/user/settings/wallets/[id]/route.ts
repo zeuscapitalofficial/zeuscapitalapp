@@ -13,20 +13,24 @@ export async function DELETE(
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    // In production, delete from WalletAddress model
+
+    await prisma.paymentMethod.deleteMany({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("DELETE wallet failed:", error);
     return NextResponse.json(
       { error: error.message || "Internal Server Error" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

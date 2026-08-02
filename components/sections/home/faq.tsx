@@ -1,54 +1,97 @@
-import { Accordion } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export function FaqSection() {
-  const faqItems = [
-    {
-      title: "How does the mining hosting model work?",
-      content:
-        "Zeus Capital operates institutional-grade hosting facilities with sustainable power sources. When you allocate capital to mining, we acquire physical ASIC hardware on your behalf, host it in our monitored tier-3 facilities, and distribute daily block rewards directly to your multi-sig custodian wallet.",
-    },
-    {
-      title: "What are the minimum capital requirements for brokerage?",
-      content:
-        "Our digital asset brokerage is tailored for high-net-worth individuals, corporations, and family offices. The minimum initial account opening size for personalized OTC brokerage access is $250,000 USD, or equivalent in major digital assets.",
-    },
-    {
-      title: "How is Zeus Capital regulated and audited?",
-      content:
-        "We prioritize operational integrity. Our custody pipelines and assets are audited quarterly by top-tier independent firms. All client transactions flow through regulated fiat trust accounts, and our physical facilities adhere to ISO 27001 data security standards.",
-    },
-    {
-      title: "What security measures are applied to digital asset custody?",
-      content:
-        "We employ institutional-grade multi-party computation (MPC) combined with hardware security modules (HSM). 100% of cold storage assets are held in offline vaults requiring geographically separated multi-signature authorization.",
-    },
-  ];
-
   return (
-    <section
-      id="faq"
-      className="py-3xl bg-white border-t border-b border-[rgba(0,0,0,0.06)]"
-    >
-      <div className="max-w-[88rem] mx-auto px-lg">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-2xl">
-          <div className="lg:col-span-5 flex flex-col gap-md items-start">
-            <span className="text-[13px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.4)]">
-              Got Questions?
-            </span>
-            <h2 className="text-[40px] sm:text-[56px] font-semibold tracking-[-0.03em] leading-tight text-black">
-              Frequently Asked Questions
-            </h2>
-            <p className="text-[16px] leading-relaxed text-[rgba(0,0,0,0.55)] max-w-4xl mt-md">
-              Everything you need to know about our physical mining, custody
-              structures, and OTC trading operations. For custom inquiries,
-              please contact our relationship managers.
-            </p>
-          </div>
-          <div className="lg:col-span-7">
-            <Accordion items={faqItems} />
-          </div>
+    <section className="mx-auto grid min-h-screen w-full max-w-7xl grid-cols-1 md:grid-cols-2">
+      <div className="px-4">
+        <div className="space-y-5">
+          <h2 className="text-[40px] sm:text-[56px] tracking-[-0.03em] font-serif italic max-w-118 leading-[1.1] text-black">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-muted-foreground">
+            Quick answers to common questions about Zeus Capital's brokerage,
+            custody, and mining services.
+          </p>
+          <p className="text-muted-foreground">
+            {"Can't find what you're looking for? "}
+            <a
+              className="text-accent-foreground font-bold hover:underline"
+              href="/contact"
+            >
+              Contact Us
+            </a>
+          </p>
         </div>
+      </div>
+      <div className="relative">
+        <Accordion className="rounded-none" collapsible type="single">
+          {faqs.map((item) => (
+            <AccordionItem
+              className="group relative pl-5"
+              key={item.id}
+              value={item.id}
+            >
+              <AccordionTrigger className="px-4 hover:no-underline focus-visible:underline focus-visible:ring-0">
+                {item.title}
+              </AccordionTrigger>
+
+              <AccordionContent className="px-4 pb-4 text-muted-foreground">
+                {item.content}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
       </div>
     </section>
   );
 }
+
+const faqs = [
+  {
+    id: "item-1",
+    title: "What does Zeus Capital offer?",
+    content:
+      "Zeus Capital is a premium digital asset brokerage and industrial-scale mining platform. We offer OTC trade execution, private multi-signature custody, and physical ASIC hashrate hosting for institutional investors and high-net-worth individuals.",
+  },
+  {
+    id: "item-2",
+    title: "Who is Zeus Capital designed for?",
+    content:
+      "We serve family offices, institutional funds, and high-net-worth individuals who require institutional-grade security, transparent mining operations, and direct ownership of digital assets without exchange counterparty risk.",
+  },
+  {
+    id: "item-3",
+    title: "How does ASIC mining hosting work?",
+    content:
+      "When you lease hashrate capacity under a Zeus Capital contract, we allocate physical ASIC hardware in our Iceland geothermal facility to your account. Daily mining rewards are calculated against active hashrate telemetry and credited automatically to your custody wallet at 00:00 UTC.",
+  },
+  {
+    id: "item-4",
+    title: "How is client capital held in custody?",
+    content:
+      "Client assets are held in multi-party computation (MPC) vaults using FIPS 140-2 Level 3 hardware security modules. Signing operations require physical key material and multi-stakeholder sign-off, eliminating single-point-of-failure risk.",
+  },
+  {
+    id: "item-5",
+    title: "Do you offer OTC brokerage for large orders?",
+    content:
+      "Yes. Our institutional desk handles large block trades in Bitcoin, Ethereum, and select digital commodities with best-execution pricing, minimal market impact, and same-day settlement directly into your custody vault.",
+  },
+  {
+    id: "item-6",
+    title: "What compliance and regulatory standards do you follow?",
+    content:
+      "Zeus Capital adheres to full AML and KYC protocols. All accounts require identity verification before accessing mining contracts or withdrawal channels. Our custody infrastructure complies with ISO 27001 datacenter standards and undergoes quarterly third-party security audits.",
+  },
+  {
+    id: "item-7",
+    title: "How do I get started with Zeus Capital?",
+    content:
+      "Create an account, complete identity verification, and our team will guide you through custody provisioning and selecting the right mining or brokerage service for your capital objectives. Contact our desk at support@zeus.capital for expedited onboarding.",
+  },
+];

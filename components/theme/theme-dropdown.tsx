@@ -1,7 +1,7 @@
 "use client";
 
-import { Check, Laptop, Moon, Sun } from "lucide-react";
-import { useAppTheme } from "@/hooks/use-app-theme";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -11,61 +11,33 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-const themes = [
-  {
-    value: "light",
-    label: "Light",
-    icon: Sun,
-  },
-  {
-    value: "dark",
-    label: "Dark",
-    icon: Moon,
-  },
-  {
-    value: "system",
-    label: "System",
-    icon: Laptop,
-  },
-] as const;
-
-export function ThemeDropdown() {
-  const { theme, setTheme } = useAppTheme();
-
-  const current = themes.find((t) => t.value === theme) ?? themes[2];
-  const CurrentIcon = current.icon;
+export function ThemeDropdownToggle() {
+  const { setTheme } = useTheme();
 
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button variant="outline" className="justify-between">
-          <span className="flex items-center gap-2">
-            <CurrentIcon className="size-4" />
-            {current.label}
-          </span>
-        </Button>
-      </DropdownMenuTrigger>
-
-      <DropdownMenuContent align="end" className="w-44">
-        {themes.map((item) => {
-          const Icon = item.icon;
-
-          return (
-            <DropdownMenuItem
-              key={item.value}
-              onClick={() => setTheme(item.value)}
-            >
-              <Icon className="mr-2 size-4" />
-
-              <span className="flex-1">{item.label}</span>
-
-              {theme === item.value && (
-                <Check className="size-4" />
-              )}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="my-2">
+      <DropdownMenu>
+        <DropdownMenuTrigger
+          render={
+            <Button variant="outline" size="icon" className="cursor-pointer">
+              <Sun className="h-[1.2rem] w-[1.2rem] scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+              <Moon className="absolute h-[1.2rem] w-[1.2rem] scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+              <span className="sr-only">Toggle theme</span>
+            </Button>
+          }
+        />
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setTheme("light")} className="cursor-pointer">
+            Light
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("dark")} className="cursor-pointer">
+            Dark
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTheme("system")} className="cursor-pointer">
+            System
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

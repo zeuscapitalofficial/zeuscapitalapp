@@ -1,5 +1,12 @@
 import { Card } from "@/components/ui/card";
-import { Cpu, ShieldCheck, Coins, Database, RefreshCw, BarChart2 } from "lucide-react";
+import {
+  Cpu,
+  ShieldCheck,
+  Coins,
+  Database,
+  RefreshCw,
+  BarChart2,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -16,23 +23,23 @@ const features = [
   },
   {
     icon: Coins,
-    title: "Multi-Asset Smart Brokerage",
-    desc: "Verify assets and buy Bitcoin, Ethereum, and USD Halo dynamically using local pricing feeds. Settle orders instantly to your digital ledger account.",
+    title: "OTC Multi-Asset Brokerage",
+    desc: "Execute large block orders in Bitcoin and Ethereum at institutional pricing. Trades settle directly to your private custody wallet with best-execution guarantees and zero slippage on OTC desk fills.",
   },
   {
     icon: Database,
-    title: "Live Database Audits Ledger",
-    desc: "Every transaction, mining block dispatch, and manual deposit is recorded to a Postgres-Neon database cluster, offering verifiable auditing logs.",
+    title: "Immutable Transaction Ledger",
+    desc: "Every transaction, mining payout, and custodial transfer is recorded with cryptographic integrity. Your complete account history is available on demand for compliance, tax reporting, and audit purposes.",
   },
   {
     icon: RefreshCw,
-    title: "Coin Pricing Overrides",
-    desc: "Real-time feeds automatically pull from CoinGecko API nodes. In case of downtime, manual admin overrides ensure smooth yield calculations.",
+    title: "Live Market Price Feeds",
+    desc: "Real-time spot prices are sourced from multiple institutional data feeds and cross-validated to ensure accuracy. Mining yield calculations and OTC valuations always reflect true market conditions.",
   },
   {
     icon: BarChart2,
-    title: "Interactive Yield Projections",
-    desc: "Inspect portfolio growth metrics in real time. Standard charts are rendered with high-speed D3.js vector shapes and mouse hover crosshairs.",
+    title: "Portfolio Analytics Dashboard",
+    desc: "Monitor mining hashrate, yield trends, and asset performance in real time. Interactive charts display cumulative return curves, daily payout history, and account net value across all holdings.",
   },
 ];
 
@@ -40,7 +47,6 @@ export default function FeaturesPage() {
   return (
     <div className="bg-[#F5F5F5] min-h-screen text-[#000000] font-sans pt-[120px] pb-3xl select-none">
       <div className="max-w-[88rem] mx-auto px-lg flex flex-col gap-2xl">
-        
         {/* Title Block */}
         <div className="flex flex-col items-center text-center gap-xs max-w-[800px] mx-auto">
           <span className="text-xs font-semibold text-[#8B7CFF] uppercase tracking-wider">
@@ -50,7 +56,8 @@ export default function FeaturesPage() {
             Platform Features
           </h1>
           <p className="text-[18px] text-[rgba(0,0,0,0.55)] font-medium leading-relaxed">
-            Zeus Capital blends multi-asset digital brokerage interfaces with industrial geothermal cloud mining arrays.
+            Zeus Capital blends multi-asset digital brokerage interfaces with
+            industrial geothermal cloud mining arrays.
           </p>
         </div>
 
@@ -66,8 +73,12 @@ export default function FeaturesPage() {
                 <feat.icon className="w-5 h-5" />
               </div>
               <div className="flex flex-col gap-2">
-                <h3 className="text-[20px] font-semibold text-black tracking-tight">{feat.title}</h3>
-                <p className="text-[14px] text-[rgba(0,0,0,0.55)] leading-relaxed font-medium">{feat.desc}</p>
+                <h3 className="text-[20px] font-semibold text-black tracking-tight">
+                  {feat.title}
+                </h3>
+                <p className="text-[14px] text-[rgba(0,0,0,0.55)] leading-relaxed font-medium">
+                  {feat.desc}
+                </p>
               </div>
             </Card>
           ))}
@@ -79,7 +90,8 @@ export default function FeaturesPage() {
             Start Generating Hashing Yield
           </h2>
           <p className="text-[15px] text-[rgba(0,0,0,0.55)] font-medium leading-relaxed max-w-[600px]">
-            Log in to lease hardware packages in seconds. Check live stats, request funding audits, and withdraw your balances instantly.
+            Log in to lease hardware packages in seconds. Check live stats,
+            request funding audits, and withdraw your balances instantly.
           </p>
           <div className="flex gap-sm mt-sm">
             <Link href="/register">
@@ -94,7 +106,6 @@ export default function FeaturesPage() {
             </Link>
           </div>
         </div>
-
       </div>
     </div>
   );

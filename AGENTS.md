@@ -8,87 +8,6 @@ This project prioritizes maintainability, scalability, clean architecture, and e
 
 ---
 
-## Documentation
-
-The following files are considered part of the project's source of truth.
-
-### DESIGN.md
-
-Contains:
-
-- Complete design system
-- UI principles
-- Layout rules
-- Typography
-- Color palette
-- Components
-- Motion
-- Page structures
-- Spacing
-- UX guidelines
-
-Always read and follow DESIGN.md before generating or modifying any UI.
-
-UI work must never contradict DESIGN.md.
-
----
-
-### PRODUCT.md
-
-Contains
-
-- Product vision
-- Features
-- User flows
-- Business requirements
-
----
-
-### ARCHITECTURE.md
-
-Contains
-
-- Folder structure
-- Module boundaries
-- Data flow
-- Project architecture
-
-Always follow these documents.
-
----
-
-### ROADMAP.md
-
-Contains:
-
-- Development phases
-- Project milestones
-- Feature implementation order
-- Current progress
-- Planned improvements
-- Long-term goals
-
-Always use ROADMAP.md to understand what has been completed, what is currently being built, and what should be implemented next.
-
-Do not skip phases or implement features out of order unless explicitly instructed.
-
-### CHANGELOG.md
-
-Contains:
-
-- Version history
-- New features
-- Improvements
-- Bug fixes
-- Breaking changes
-- Security updates
-
-Update CHANGELOG.md whenever a meaningful change is made to the project.
-
-Follow semantic versioning and keep entries concise, chronological, and easy to review.
-
----
-
 ## Tech Stack
 
 - Bun
@@ -147,7 +66,7 @@ Optimize for long-term maintainability rather than short-term speed.
 
 Never invent new visual styles.
 
-Always reuse the existing design language defined in DESIGN.md.
+Always reuse the existing design language from shadcn/ui.
 
 Every page should feel like it belongs to the same application.
 
@@ -157,10 +76,9 @@ Every page should feel like it belongs to the same application.
 
 Before creating a new component:
 
-1. Search for an existing one.
+1. ShadCN most likey have it, and all of ShadCN components are already in the codebase so deploy a subagent to research if that componet exists.
 2. Reuse it if possible.
-3. Extend it if necessary.
-4. Create a new one only as a last resort.
+3. Never modify shadcn components.
 
 ---
 
@@ -177,7 +95,7 @@ Before creating a new component:
 
 Never use TradingView.
 
-Use reusable chart components built with Recharts or D3.
+Use reusable chart components built with Recharts.
 
 Charts must accept generic data through props.
 
@@ -185,7 +103,7 @@ Charts must accept generic data through props.
 
 ## Data
 
-Use mocked data during development unless instructed otherwise.
+Never use mocked data unless instructed otherwise.
 
 When integrating market data, read from the application's database rather than directly from external APIs whenever possible.
 
@@ -222,3 +140,4 @@ Before considering any task complete:
 
 - Never use npm, yarn, or pnpm only use bun
 - Do not run npx, yarnx or pnpx only bunx
+- bunx dont work no more so run bunx --bun

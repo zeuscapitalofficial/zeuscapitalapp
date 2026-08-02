@@ -1,11 +1,19 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Shield, X, CheckCircle, AlertCircle, Clock, Loader2 } from "lucide-react";
+import Link from "next/link";
+import {
+  Shield,
+  X,
+  CheckCircle2,
+  AlertTriangle,
+  Clock,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { useSession } from "@/lib/auth-client";
-import { toast } from "sonner";
 
 interface KycData {
   status: "PENDING" | "APPROVED" | "REJECTED";
@@ -60,41 +68,6 @@ export function KYCStatusBanner({ onDismiss }: { onDismiss: () => void }) {
     return null;
   }
 
-  const getStatusConfig = () => {
-    switch (kyc.status) {
-      case "APPROVED":
-        return {
-          icon: CheckCircle,
-          bgColor: "bg-green-500/10",
-          borderColor: "border-green-500/20",
-          textColor: "text-green-400",
-          label: "Verified",
-          description: "Your identity has been verified. All account features are unlocked.",
-        };
-      case "PENDING":
-        return {
-          icon: Clock,
-          bgColor: "bg-yellow-500/10",
-          borderColor: "border-yellow-500/20",
-          textColor: "text-yellow-400",
-          label: "Under Review",
-          description: "Your KYC documents are being reviewed. This usually takes 24-48 hours.",
-        };
-      case "REJECTED":
-        return {
-          icon: AlertCircle,
-          bgColor: "bg-red-500/10",
-          borderColor: "border-red-500/20",
-          textColor: "text-red-400",
-          label: "Rejected",
-          description: kyc.rejectionReason || "Your KYC submission was rejected. Please review and resubmit.",
-        };
-    }
-  };
-
-  const config = getStatusConfig();
-  const Icon = config.icon;
-
   const handleDismiss = () => {
     if (kyc.status === "APPROVED") {
       const dismissedKey = `kyc-dismissed-${user?.id}`;
@@ -106,43 +79,88 @@ export function KYCStatusBanner({ onDismiss }: { onDismiss: () => void }) {
 
   return (
     <Card
-      variant="flat"
-      className={`p-md bg-[#111114] border ${config.borderColor} rounded-[16px] max-w-[620px] ${config.bgColor} flex items-center justify-between gap-md`}
+      className={`shadow-xs border ${
+        kyc.status === "APPROVED"
+          ? "border-emerald-500/30 bg-emerald-500/10"
+          : kyc.status === "PENDING"
+          ? "border-amber-500/30 bg-amber-500/10"
+          : "border-rose-500/30 bg-rose-500/10"
+      } max-w-full`}
     >
-      <div className="flex items-center gap-md flex-1 min-w-0">
-        <div className={`p-2 rounded-[10px] ${config.bgColor} flex-shrink-0`}>
-          <Icon className={`w-5 h-5 ${config.textColor}`} />
-        </div>
-        <div className="min-w-0">
-          <div className="flex items-center gap-xs">
-            <Shield className={`w-4 h-4 ${config.textColor}`} />
-            <span className={`text-[13px] font-semibold ${config.textColor}`}>KYC Status: {config.label}</span>
+      <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className={`size-9 rounded-lg flex items-center justify-center shrink-0 ${
+              kyc.status === "APPROVED"
+                ? "bg-emerald-500/20 text-emerald-600"
+                : kyc.status === "PENDING"
+                ? "bg-amber-500/20 text-amber-600"
+                : "bg-rose-500/20 text-rose-600"
+            }`}
+          >
+            {kyc.status === "APPROVED" ? (
+              <CheckCircle2 className="size-5" />
+            ) : kyc.status === "PENDING" ? (
+              <Clock className="size-5" />
+            ) : (
+              <AlertTriangle className="size-5" />
+            )}
           </div>
-          <p className="text-[12px] text-[rgba(255,255,255,0.6)] mt-0.5 truncate">{config.description}</p>
+
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold text-foreground">
+                Identity Verification: {kyc.status}
+              </span>
+              <Badge
+                variant="outline"
+                className={`text-[10px] capitalize ${
+                  kyc.status === "APPROVED"
+                    ? "border-emerald-500/40 text-emerald-600 bg-emerald-500/20"
+                    : kyc.status === "PENDING"
+                    ? "border-amber-500/40 text-amber-600 bg-amber-500/20"
+                    : "border-rose-500/40 text-rose-600 bg-rose-500/20"
+                }`}
+              >
+                {kyc.status}
+              </Badge>
+            </div>
+            <p className="text-xs text-muted-foreground truncate">
+              {kyc.status === "APPROVED"
+                ? "Your identity is fully verified. Standard withdrawal limits unlocked."
+                : kyc.status === "PENDING"
+                ? "Your submitted documents are currently under review by compliance team."
+                : kyc.rejectionReason || "Verification failed. Please review documents and resubmit."}
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="flex items-center gap-sm flex-shrink-0">
-        {kyc.status === "REJECTED" && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 rounded-[10px] border-[rgba(255,255,255,0.06)] bg-[#111114] text-[12px] font-semibold hover:bg-[#1D1D22]"
-            onClick={() => window.location.href = "/dashboard/kyc"}
-          >
-            Resubmit Documents
-          </Button>
-        )}
-        {kyc.status === "APPROVED" && (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 rounded-[10px] text-[rgba(255,255,255,0.48)] hover:text-white"
-            onClick={handleDismiss}
-          >
-            <X className="w-4 h-4" />
-          </Button>
-        )}
-      </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+          {kyc.status === "REJECTED" && (
+            <Button
+              nativeButton={false}
+              render={
+                <Link href="/dashboard/kyc">
+                  Resubmit Documents <ChevronRight className="size-3.5" />
+                </Link>
+              }
+              size="sm"
+              className="bg-rose-600 hover:bg-rose-700 text-white text-xs h-8 gap-1 cursor-pointer"
+            />
+          )}
+
+          {kyc.status === "APPROVED" && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDismiss}
+              className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+            >
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
+      </CardContent>
     </Card>
   );
 }

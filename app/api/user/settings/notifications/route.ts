@@ -10,16 +10,13 @@ export async function GET() {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Return defaults for now
+    // Default emailEnabled to false for all accounts as per policy
     return NextResponse.json({
       preferences: {
-        emailEnabled: true,
+        emailEnabled: false,
         pushEnabled: true,
         securityAlerts: true,
         transactionAlerts: true,
@@ -49,14 +46,10 @@ export async function POST(request: Request) {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    // In production, save to UserNotificationPreferences table
     return NextResponse.json({ success: true, preferences: body });
   } catch (error: any) {
     console.error("POST notifications failed:", error);

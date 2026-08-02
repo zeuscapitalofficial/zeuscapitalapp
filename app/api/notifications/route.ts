@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 async function getSessionUser() {
   const session = await auth.api.getSession({
-    headers: await headers()
+    headers: await headers(),
   });
   return session?.user || null;
 }
@@ -20,13 +20,16 @@ export async function GET() {
     const notifications = await prisma.notification.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: "desc" },
-      take: 20
+      take: 20,
     });
 
     return NextResponse.json(notifications);
   } catch (error: any) {
     console.error("GET notifications failed:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
@@ -44,19 +47,22 @@ export async function POST(request: Request) {
       // Mark specific notification as read
       await prisma.notification.updateMany({
         where: { id, userId: user.id },
-        data: { isRead: true }
+        data: { isRead: true },
       });
     } else {
       // Mark all as read
       await prisma.notification.updateMany({
         where: { userId: user.id, isRead: false },
-        data: { isRead: true }
+        data: { isRead: true },
       });
     }
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error("POST read notifications failed:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

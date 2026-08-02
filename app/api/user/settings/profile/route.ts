@@ -9,20 +9,14 @@ export async function PATCH(request: Request) {
     });
 
     if (!session || !session.user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
     const { name } = body;
 
     if (!name || name.trim().length === 0) {
-      return NextResponse.json(
-        { error: "Name is required" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
 
     // Update user name using Better Auth

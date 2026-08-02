@@ -1,47 +1,48 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Globe, Bell, Moon, Sun, Monitor } from "lucide-react";
+import { Loader2, Globe, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useSession } from "@/lib/auth-client";
+import { useTranslation } from "@/lib/i18n/i18n-context";
+import { LanguageCode } from "@/lib/i18n/dictionaries";
 import { toast } from "sonner";
 
 interface PreferencesData {
   language: string;
   timezone: string;
   currency: string;
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  marketingEmails: boolean;
-  securityAlerts: boolean;
-  transactionAlerts: boolean;
-  miningAlerts: boolean;
-  doNotDisturb: boolean;
-  dndStart: string;
-  dndEnd: string;
 }
 
 const languages = [
-  { code: "en", name: "English" },
-  { code: "es", name: "Spanish" },
-  { code: "fr", name: "French" },
-  { code: "de", name: "German" },
-  { code: "zh", name: "Chinese" },
-  { code: "ja", name: "Japanese" },
-  { code: "ko", name: "Korean" },
-  { code: "ru", name: "Russian" },
+  { code: "en", name: "English (US)" },
+  { code: "es", name: "Spanish (Español)" },
+  { code: "fr", name: "French (Français)" },
+  { code: "de", name: "German (Deutsch)" },
+  { code: "zh", name: "Chinese (中文)" },
+  { code: "ja", name: "Japanese (日本語)" },
 ];
 
 const timezones = [
   "UTC",
   "America/New_York",
   "America/Chicago",
-  "America/Denver",
   "America/Los_Angeles",
   "Europe/London",
   "Europe/Paris",
@@ -53,32 +54,22 @@ const timezones = [
 ];
 
 const currencies = [
-  { code: "USD", name: "US Dollar ($)" },
-  { code: "EUR", name: "Euro (€)" },
-  { code: "GBP", name: "British Pound (£)" },
-  { code: "JPY", name: "Japanese Yen (¥)" },
-  { code: "AUD", name: "Australian Dollar (A$)" },
-  { code: "CAD", name: "Canadian Dollar (C$)" },
-  { code: "CHF", name: "Swiss Franc (CHF)" },
-  { code: "SGD", name: "Singapore Dollar (S$)" },
+  { code: "USD", name: "USD ($) - US Dollar" },
+  { code: "EUR", name: "EUR (€) - Euro" },
+  { code: "GBP", name: "GBP (£) - British Pound" },
+  { code: "JPY", name: "JPY (¥) - Japanese Yen" },
+  { code: "AUD", name: "AUD (A$) - Australian Dollar" },
+  { code: "CAD", name: "CAD (C$) - Canadian Dollar" },
 ];
 
 export function PreferencesSettings() {
   const { data: session } = useSession();
+  const { language: currentLang, setLanguage } = useTranslation();
   const user = session?.user;
   const [preferences, setPreferences] = useState<PreferencesData>({
-    language: "en",
+    language: currentLang || "en",
     timezone: "UTC",
     currency: "USD",
-    emailNotifications: true,
-    pushNotifications: true,
-    marketingEmails: false,
-    securityAlerts: true,
-    transactionAlerts: true,
-    miningAlerts: true,
-    doNotDisturb: false,
-    dndStart: "22:00",
-    dndEnd: "08:00",
   });
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -92,7 +83,11 @@ export function PreferencesSettings() {
         if (res.ok) {
           const data = await res.json();
           if (data.preferences) {
-            setPreferences(prev => ({ ...prev, ...data.preferences }));
+            setPreferences((prev) => ({
+              ...prev,
+              timezone: data.preferences.timezone || "UTC",
+              currency: data.preferences.currency || "USD",
+            }));
           }
         }
       } catch (error) {
@@ -104,10 +99,23 @@ export function PreferencesSettings() {
     fetchPreferences();
   }, [user]);
 
+  // Keep local state in sync if global language changes
+  useEffect(() => {
+    if (currentLang) {
+      setPreferences((prev) => ({ ...prev, language: currentLang }));
+    }
+  }, [currentLang]);
+
+  const handleLanguageChange = (val: string) => {
+    setPreferences((prev) => ({ ...prev, language: val }));
+    setLanguage(val as LanguageCode);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     try {
+      setLanguage(preferences.language as LanguageCode);
       const res = await fetch("/api/user/settings/preferences", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -117,7 +125,7 @@ export function PreferencesSettings() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to save preferences");
 
-      toast.success("Preferences saved successfully");
+      toast.success("Regional preferences saved successfully");
     } catch (error: any) {
       toast.error(error.message || "Failed to save preferences");
     } finally {
@@ -125,211 +133,116 @@ export function PreferencesSettings() {
     }
   };
 
-  const togglePreference = (key: keyof PreferencesData) => {
-    setPreferences(prev => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  if (loading) {
-    return (
-      <Card variant="flat" className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] max-w-[620px]">
-        <div className="flex items-center justify-center py-xl">
-          <Loader2 className="w-6 h-6 animate-spin text-[#8B7CFF]" />
-        </div>
-      </Card>
-    );
-  }
-
   return (
-    <Card
-      variant="flat"
-      className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] max-w-[620px] flex flex-col gap-md"
-    >
-      <div className="flex items-center gap-xs">
-        <Globe className="w-5 h-5 text-[#8B7CFF]" />
-        <h3 className="text-[18px] font-semibold text-white">Preferences</h3>
-      </div>
-
-      <form className="flex flex-col gap-lg" onSubmit={handleSubmit}>
-        {/* Regional Settings */}
-        <div className="space-y-md pt-md border-t border-[rgba(255,255,255,0.06)]">
-          <h4 className="text-[14px] font-semibold text-[rgba(255,255,255,0.72)]">Regional Settings</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-md">
-            <div className="flex flex-col gap-xs">
-              <Label htmlFor="language" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                Language
-              </Label>
-              <Select value={preferences.language} onValueChange={(v) => setPreferences(prev => ({ ...prev, language: v }))}>
-                <SelectTrigger className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent h-10">
-                  <SelectValue placeholder="Select language" />
-                </SelectTrigger>
-                <SelectContent>
-                  {languages.map(lang => (
-                    <SelectItem key={lang.code} value={lang.code}>{lang.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-xs">
-              <Label htmlFor="timezone" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                Timezone
-              </Label>
-              <Select value={preferences.timezone} onValueChange={(v) => setPreferences(prev => ({ ...prev, timezone: v }))}>
-                <SelectTrigger className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent h-10">
-                  <SelectValue placeholder="Select timezone" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timezones.map(tz => (
-                    <SelectItem key={tz} value={tz}>{tz}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex flex-col gap-xs">
-              <Label htmlFor="currency" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                Display Currency
-              </Label>
-              <Select value={preferences.currency} onValueChange={(v) => setPreferences(prev => ({ ...prev, currency: v }))}>
-                <SelectTrigger className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent h-10">
-                  <SelectValue placeholder="Select currency" />
-                </SelectTrigger>
-                <SelectContent>
-                  {currencies.map(curr => (
-                    <SelectItem key={curr.code} value={curr.code}>{curr.name}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <Card className="w-full shadow-xs border-border bg-card">
+      <CardHeader className="border-b border-border pb-4">
+        <div className="flex items-center gap-2.5">
+          <div className="size-8 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center">
+            <Globe className="size-4" />
+          </div>
+          <div>
+            <CardTitle className="text-base font-bold text-foreground">Localization & Display</CardTitle>
+            <CardDescription className="text-xs">
+              Configure your default language, primary fiat currency, and local timezone.
+            </CardDescription>
           </div>
         </div>
+      </CardHeader>
 
-        {/* Notification Preferences */}
-        <div className="space-y-md pt-md border-t border-[rgba(255,255,255,0.06)]">
-          <h4 className="text-[14px] font-semibold text-[rgba(255,255,255,0.72)]">Notifications</h4>
-          <div className="space-y-sm">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <Bell className="w-5 h-5 text-[rgba(255,255,255,0.48)]" />
-                <span className="text-[14px] font-medium text-white">Email Notifications</span>
-              </div>
-              <Switch
-                checked={preferences.emailNotifications}
-                onCheckedChange={() => togglePreference("emailNotifications")}
-              />
+      <form onSubmit={handleSubmit}>
+        <CardContent className="pt-5 space-y-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-8 text-xs text-muted-foreground gap-2">
+              <Loader2 className="size-4 animate-spin text-accent-foreground" />
+              Loading preferences...
             </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <Monitor className="w-5 h-5 text-[rgba(255,255,255,0.48)]" />
-                <span className="text-[14px] font-medium text-white">Push Notifications</span>
-              </div>
-              <Switch
-                checked={preferences.pushNotifications}
-                onCheckedChange={() => togglePreference("pushNotifications")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <span className="text-[14px] font-medium text-white">Marketing Emails</span>
-              </div>
-              <Switch
-                checked={preferences.marketingEmails}
-                onCheckedChange={() => togglePreference("marketingEmails")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <span className="text-[14px] font-medium text-white">Security Alerts</span>
-              </div>
-              <Switch
-                checked={preferences.securityAlerts}
-                onCheckedChange={() => togglePreference("securityAlerts")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <span className="text-[14px] font-medium text-white">Transaction Alerts</span>
-              </div>
-              <Switch
-                checked={preferences.transactionAlerts}
-                onCheckedChange={() => togglePreference("transactionAlerts")}
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-sm">
-                <span className="text-[14px] font-medium text-white">Mining Alerts</span>
-              </div>
-              <Switch
-                checked={preferences.miningAlerts}
-                onCheckedChange={() => togglePreference("miningAlerts")}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Do Not Disturb */}
-        <div className="space-y-md pt-md border-t border-[rgba(255,255,255,0.06)]">
-          <h4 className="text-[14px] font-semibold text-[rgba(255,255,255,0.72)]">Do Not Disturb</h4>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-sm">
-              <Moon className="w-5 h-5 text-[rgba(255,255,255,0.48)]" />
-              <span className="text-[14px] font-medium text-white">Enable Do Not Disturb</span>
-            </div>
-            <Switch
-              checked={preferences.doNotDisturb}
-              onCheckedChange={() => togglePreference("doNotDisturb")}
-            />
-          </div>
-
-          {preferences.doNotDisturb && (
-            <div className="grid grid-cols-2 gap-md ml-10">
-              <div className="flex flex-col gap-xs">
-                <Label htmlFor="dndStart" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                  Start Time
-                </Label>
-                <Input
-                  id="dndStart"
-                  type="time"
-                  value={preferences.dndStart}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, dndStart: e.target.value }))}
-                  className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white"
-                />
-              </div>
-              <div className="flex flex-col gap-xs">
-                <Label htmlFor="dndEnd" className="text-xs font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-                  End Time
-                </Label>
-                <Input
-                  id="dndEnd"
-                  type="time"
-                  value={preferences.dndEnd}
-                  onChange={(e) => setPreferences(prev => ({ ...prev, dndEnd: e.target.value }))}
-                  className="rounded-[14px] border-[rgba(255,255,255,0.08)] bg-transparent text-sm h-10 text-white"
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        <Button
-          type="submit"
-          disabled={saving}
-          className="w-[140px] bg-[#8B7CFF] hover:bg-[#7A6BEA] text-white text-[13px] font-semibold h-10 rounded-[14px] mt-xs disabled:opacity-50"
-        >
-          {saving ? (
-            <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Saving...
-            </>
           ) : (
-            "Save Preferences"
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1.5">
+                <Label htmlFor="language" className="text-xs font-semibold text-foreground">
+                  Language
+                </Label>
+                <Select
+                  value={preferences.language}
+                  onValueChange={handleLanguageChange}
+                >
+                  <SelectTrigger id="language" className="text-xs h-9 bg-background w-full">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {languages.map((l) => (
+                      <SelectItem key={l.code} value={l.code} className="text-xs">
+                        {l.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="currency" className="text-xs font-semibold text-foreground">
+                  Display Currency
+                </Label>
+                <Select
+                  value={preferences.currency}
+                  onValueChange={(val) => setPreferences((prev) => ({ ...prev, currency: val }))}
+                >
+                  <SelectTrigger id="currency" className="text-xs h-9 bg-background w-full">
+                    <SelectValue placeholder="Select currency" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currencies.map((c) => (
+                      <SelectItem key={c.code} value={c.code} className="text-xs">
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="timezone" className="text-xs font-semibold text-foreground">
+                  Timezone
+                </Label>
+                <Select
+                  value={preferences.timezone}
+                  onValueChange={(val) => setPreferences((prev) => ({ ...prev, timezone: val }))}
+                >
+                  <SelectTrigger id="timezone" className="text-xs h-9 bg-background w-full">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timezones.map((tz) => (
+                      <SelectItem key={tz} value={tz} className="text-xs">
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           )}
-        </Button>
+        </CardContent>
+
+        <CardFooter className="border-t border-border pt-4 justify-end mt-auto">
+          <Button
+            type="submit"
+            disabled={saving || loading}
+            className="bg-accent-foreground text-background hover:bg-accent-foreground/90 text-xs h-9 gap-1.5 cursor-pointer"
+          >
+            {saving ? (
+              <>
+                <Loader2 className="size-3.5 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <Save className="size-3.5" />
+                Save Preferences
+              </>
+            )}
+          </Button>
+        </CardFooter>
       </form>
     </Card>
   );

@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import blogData from "@/lib/data/blog-posts.json";
+import { Card } from "@/components/ui/card";
 
 export function BlogSection() {
   // Sort posts by display_order ascending
@@ -9,27 +10,27 @@ export function BlogSection() {
   return (
     <section
       id="blog"
-      className="bg-[#FFFFFF] py-2xl border-t border-[rgba(0,0,0,0.08)] w-full"
+      className="bg-background py-2xl border-t border-border w-full"
     >
-      <div className="max-w-352 mx-auto px-lg">
+      <div className="max-w-[88rem] mx-auto px-lg">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-md mb-2xl">
           <div className="flex flex-col gap-xs max-w-4xl">
-            <span className="text-[13px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.4)]">
-              Behind the Lens
+            <span className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+              Research & Commentary
             </span>
-            <h2 className="text-[40px] md:text-[56px] font-semibold tracking-[-0.03em] leading-tight text-black">
-              Thoughts & Insights
+            <h2 className="text-[40px] sm:text-[56px] tracking-[-0.03em] font-serif italic max-w-118 leading-[1.1] text-black">
+              Market Insights
             </h2>
             <p className="text-[16px] md:text-[18px] text-muted-foreground leading-relaxed mt-xs">
-              Stories, technical guides, and business strategies from our team
-              at Zeus Capital.
+              Technical analysis, mining economics, and custody best practices
+              from the Zeus Capital research desk.
             </p>
           </div>
           <div className="shrink-0 mt-xs md:mt-0">
             <Link
               href="/blog"
-              className="inline-flex items-center gap-xs text-[14px] font-semibold text-black hover:underline group"
+              className="inline-flex items-center gap-xs text-[14px] font-semibold text-foreground hover:underline group"
             >
               <span>View all posts</span>
               <ArrowUpRight
@@ -48,31 +49,31 @@ export function BlogSection() {
               className="flex flex-col gap-md group cursor-pointer"
             >
               {/* Video wrapper */}
-              <div className="relative aspect-16/10 rounded-card-custom overflow-hidden border border-[rgba(0,0,0,0.08)] bg-[rgba(0,0,0,0.02)]">
+              <Card className="relative aspect-16/10 rounded-card-custom overflow-hidden border border-border bg-muted/20">
                 <video
-                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
+                  className="absolute inset-0 w-full h-full object-cover"
                   src={post.video_url}
                   autoPlay
                   muted
                   loop
                   playsInline
                 />
-              </div>
+              </Card>
 
               {/* Text metadata and details */}
               <div className="flex flex-col gap-xs">
                 <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[rgba(0,0,0,0.4)]">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
                     {post.category}
                   </span>
-                  <span className="text-[11px] text-[rgba(0,0,0,0.4)]">
+                  <span className="text-[11px] text-muted-foreground/60">
                     {post.author.replace("By ", "")}
                   </span>
                 </div>
-                <h4 className="text-[20px] font-semibold text-black tracking-tight leading-snug group-hover:text-[rgba(0,0,0,0.7)] transition-colors mt-xs">
+                <h4 className="text-[20px] font-semibold text-foreground tracking-tight leading-snug group-hover:text-muted-foreground transition-colors mt-xs truncate">
                   {post.title}
                 </h4>
-                <p className="text-[14px] leading-relaxed text-muted-foreground">
+                <p className="text-[14px] leading-relaxed line-clamp-2 text-muted-foreground">
                   {post.description ||
                     "A deep dive into our operational processes and strategic insights."}
                 </p>

@@ -49,7 +49,7 @@ export async function GET() {
         eth: ethMap.get(date),
       };
     })
-    .filter((item) => item.eth !== undefined);
+    .filter((item: { date: string; btc: number; eth: number | undefined }) => item.eth !== undefined);
 
   const first = data[0];
 
@@ -57,7 +57,7 @@ export async function GET() {
     return NextResponse.json([]);
   }
 
-  const normalized = data.map((item) => ({
+  const normalized = data.map((item: { date: string; btc: number; eth: number | undefined }) => ({
     date: item.date,
     btc: (item.btc / first.btc) * 100,
     eth: ((item.eth as number) / (first.eth as number)) * 100,

@@ -1,6 +1,6 @@
 "use client";
 
-import { animate, motion, useInView } from "motion/react";
+import { animate, motion, useInView, type Easing } from "motion/react";
 import React, { useEffect, useRef } from "react";
 
 // 1. AnimatedCounter Helper Component
@@ -120,12 +120,14 @@ export function StatsSection() {
     },
   };
 
+  const statItemEase: Easing = "easeOut";
+
   const statItemVariants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.4, ease: "easeOut" },
+      transition: { duration: 0.4, ease: statItemEase },
     },
   };
 

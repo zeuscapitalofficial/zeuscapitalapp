@@ -95,7 +95,7 @@ export default function FeaturesPage() {
           </p>
           <div className="flex gap-sm mt-sm">
             <Link href="/register">
-              <Button variant="primary" className="px-6 py-2.5">
+              <Button variant="default" className="px-6 py-2.5">
                 Get Started
               </Button>
             </Link>

@@ -262,10 +262,12 @@ export function GlobalChatbotWidget() {
     }
 
     const handleAuthSuccess = () => {
-      setIsAuthenticated(true);
+      if (conversationId) {
+        socket.emit("join-conversation", conversationId);
+      }
     };
 
-    const handleDisconnect = () => setIsConnected(false);
+    const handleDisconnect = () => {};
 
     const handleConversationCreated = ({ conversationId: id }: { conversationId: string }) => {
       setConversationId(id);

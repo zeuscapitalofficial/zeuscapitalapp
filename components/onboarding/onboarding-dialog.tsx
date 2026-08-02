@@ -269,7 +269,10 @@ export function OnboardingDialog() {
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Primary Display Currency</Label>
-                <Select value={currency} onValueChange={setCurrency}>
+                <Select
+                  value={currency}
+                  onValueChange={(value) => setCurrency(value ?? "USD")}
+                >
                   <SelectTrigger className="text-xs h-9 w-full">
                     <SelectValue placeholder="Select Currency" />
                   </SelectTrigger>

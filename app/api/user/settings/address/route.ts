@@ -18,7 +18,6 @@ export async function GET() {
       where: { userId: session.user.id },
       select: {
         addressLine1: true,
-        addressLine2: true,
         city: true,
         state: true,
         postalCode: true,
@@ -51,7 +50,6 @@ export async function POST(request: Request) {
     const body = await request.json();
     const {
       addressLine1,
-      addressLine2,
       city,
       state,
       postalCode,
@@ -65,7 +63,6 @@ export async function POST(request: Request) {
       where: { userId: session.user.id },
       update: {
         addressLine1: addressLine1 || "",
-        addressLine2: addressLine2 || "",
         city: city || "",
         state: state || "",
         postalCode: postalCode || "",
@@ -89,7 +86,6 @@ export async function POST(request: Request) {
         postalCode: postalCode || "",
         nationality: "",
         sourceOfFunds: "",
-        addressLine2: addressLine2 || "",
       },
     });
 

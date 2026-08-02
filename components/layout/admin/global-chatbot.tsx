@@ -62,6 +62,7 @@ import {
   MessageContent,
   MessageHeader,
   MessageFooter,
+} from "@/components/ui/message";
 import { useSocket } from "@/components/providers/socket-provider";
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -234,7 +235,7 @@ export function GlobalChatbotWidget() {
     const handleAuthSuccess = () => {
       if (conversationId) {
         socket.emit("join-conversation", conversationId);
-        
+
         // Fetch new messages since last message
         const lastMsg = messages[messages.length - 1];
         const after = lastMsg ? lastMsg.createdAt : undefined;
@@ -242,7 +243,7 @@ export function GlobalChatbotWidget() {
         if (after) {
           url += `&after=${encodeURIComponent(after)}`;
         }
-        
+
         fetch(url)
           .then((r) => (r.ok ? r.json() : null))
           .then((d) => {
@@ -260,11 +261,7 @@ export function GlobalChatbotWidget() {
       }
     };
 
-    const handleAuthSuccess = () => {
-      setIsAuthenticated(true);
-    };
-
-    const handleDisconnect = () => setIsConnected(false);
+    const handleDisconnect = () => {};
 
     const handleConversationCreated = ({ conversationId: id }: { conversationId: string }) => {
       setConversationId(id);
@@ -554,13 +551,15 @@ export function GlobalChatbotWidget() {
                                           {msg.senderName}
                                         </MessageHeader>
                                       )}
-                                      <Bubble variant={msg.role === "user" ? "default" : "muted"}>
-                                        <BubbleContent>
-                                          <p className="leading-relaxed whitespace-pre-wrap text-sm">
-                                            {msg.content}
-                                          </p>
-                                        </BubbleContent>
-                                      </Bubble>
+                                      <div
+                                        className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed whitespace-pre-wrap ${
+                                          msg.role === "user"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-muted text-foreground"
+                                        }`}
+                                      >
+                                        {msg.content}
+                                      </div>
                                       <MessageFooter>
                                         {msg.timestamp}
                                         {msg.role === "user" && (

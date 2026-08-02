@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 export function SecuritySection() {
   return (
     <section className="py-3xl px-md max-w-[88rem] mx-auto w-full">
-      <Card variant="dark" size="large" className="relative overflow-hidden">
+      <Card variant="dark" size="sm" className="relative overflow-hidden">
         {/* Subtle background glow */}
         <div className="absolute right-0 top-0 w-[500px] h-[500px] bg-[rgba(255,255,255,0.015)] rounded-full blur-[100px] pointer-events-none" />
 

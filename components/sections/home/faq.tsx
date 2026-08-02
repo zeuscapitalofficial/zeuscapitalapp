@@ -29,7 +29,7 @@ export function FaqSection() {
         </div>
       </div>
       <div className="relative">
-        <Accordion className="rounded-none" collapsible type="single">
+        <Accordion className="rounded-none">
           {faqs.map((item) => (
             <AccordionItem
               className="group relative pl-5"

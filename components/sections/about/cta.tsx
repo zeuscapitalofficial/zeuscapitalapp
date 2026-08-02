@@ -8,7 +8,7 @@ export function AboutCtaSection() {
     <section className="py-3xl px-md max-w-[88rem] mx-auto w-full">
       <Card
         variant="dark"
-        size="large"
+        size="sm"
         className="text-center flex flex-col items-center gap-lg"
       >
         <span className="text-[13px] font-semibold uppercase tracking-wider text-[rgba(255,255,255,0.6)]">
@@ -24,16 +24,16 @@ export function AboutCtaSection() {
         <div className="flex flex-col sm:flex-row gap-md">
           <Link href="/register">
             <Button
-              variant="primary"
-              className="bg-white text-black hover:bg-neutral-100"
-              icon={<ArrowRight size={16} />}
+              variant="default"
+              className="bg-white text-black hover:bg-neutral-100 gap-2"
             >
               Establish Account
+              <ArrowRight size={16} />
             </Button>
           </Link>
           <Link href="/contact">
             <Button
-              variant="secondary"
+              variant="outline"
               className="bg-transparent text-white border-white/20 hover:bg-white/5 hover:border-white/40"
             >
               Discuss Custody Options

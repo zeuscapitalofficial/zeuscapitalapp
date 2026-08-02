@@ -95,7 +95,8 @@ export function WalletSettings() {
     }
   };
 
-  const handleCurrencyChange = (currency: string) => {
+  const handleCurrencyChange = (currency: string | null) => {
+    if (!currency) return;
     const config = supportedCurrencies.find((c) => c.code === currency);
     setNewWallet((prev) => ({
       ...prev,
@@ -305,9 +306,10 @@ export function WalletSettings() {
                 </Label>
                 <Select
                   value={newWallet.network}
-                  onValueChange={(val) =>
-                    setNewWallet((prev) => ({ ...prev, network: val }))
-                  }
+                  onValueChange={(val) => {
+                    if (!val) return;
+                    setNewWallet((prev) => ({ ...prev, network: val }));
+                  }}
                 >
                   <SelectTrigger id="network" className="text-xs h-9 w-full">
                     <SelectValue placeholder="Select network" />

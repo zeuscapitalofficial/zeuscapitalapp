@@ -1,6 +1,7 @@
 "use client";
 
-import { useTheme } from "@/components/providers/theme-provider";
+import { useAccent } from "@/components/providers/accent-provider";
+import { useTheme as useNextTheme } from "next-themes";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,9 @@ import { Label } from "@/components/ui/label";
 import { Sun, Moon, Monitor, Palette } from "lucide-react";
 
 export function MarketingThemeSelector() {
-  const { marketingTheme, setMarketingTheme, resolvedTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useNextTheme();
+  const marketingTheme = theme ?? "system";
+  const setMarketingTheme = (value: string) => setTheme(value as "light" | "dark" | "system");
 
   return (
     <div className="space-y-2">
@@ -20,7 +23,14 @@ export function MarketingThemeSelector() {
         <Monitor className="size-4" />
         Marketing Theme
       </Label>
-      <Select value={marketingTheme} onValueChange={setMarketingTheme}>
+      <Select
+        value={marketingTheme}
+        onValueChange={(value) => {
+          if (value) {
+            setMarketingTheme(value);
+          }
+        }}
+      >
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select theme" />
         </SelectTrigger>
@@ -50,7 +60,7 @@ export function MarketingThemeSelector() {
 }
 
 export function DashboardAccentSelector() {
-  const { dashboardAccent, setDashboardAccent } = useTheme();
+  const { accent, setAccent } = useAccent();
 
   const accents = [
     { value: "purple", label: "Purple", color: "bg-purple-500" },
@@ -67,7 +77,7 @@ export function DashboardAccentSelector() {
         <Palette className="size-4" />
         Dashboard Accent
       </Label>
-      <Select value={dashboardAccent} onValueChange={setDashboardAccent}>
+      <Select value={accent} onValueChange={(value) => setAccent(value as "purple" | "blue" | "emerald" | "amber" | "rose" | "indigo")}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Select accent" />
         </SelectTrigger>

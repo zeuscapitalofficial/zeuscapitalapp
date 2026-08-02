@@ -7,7 +7,8 @@ export type NotificationType =
   | "SECURITY"
   | "DEPOSIT"
   | "WITHDRAWAL"
-  | "SYSTEM";
+  | "SYSTEM"
+  | "REWARDS";
 
 interface CreateNotificationParams {
   userId: string;
@@ -19,6 +20,15 @@ interface CreateNotificationParams {
 /**
  * Dispatch an automated notification to a user or all users ("ALL")
  */
+export async function createNotification({
+  userId,
+  title,
+  message,
+  type = "INFO",
+}: CreateNotificationParams) {
+  return dispatchNotification({ userId, title, message, type });
+}
+
 export async function dispatchNotification({
   userId,
   title,

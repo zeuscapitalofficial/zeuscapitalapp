@@ -1032,7 +1032,10 @@ export default function AdminUsersPage() {
               <Label htmlFor="alert-type" className="text-xs font-semibold text-foreground">
                 Notification Type
               </Label>
-              <Select value={alertType} onValueChange={setAlertType}>
+              <Select
+                value={alertType}
+                onValueChange={(value) => setAlertType(value ?? "INFO")}
+              >
                 <SelectTrigger id="alert-type" className="text-xs h-9">
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>

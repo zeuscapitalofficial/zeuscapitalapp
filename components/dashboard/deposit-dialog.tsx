@@ -235,7 +235,10 @@ export function DepositDialog({
             <Label className="text-xs font-semibold text-foreground">
               Select Payment Method
             </Label>
-            <Select value={method} onValueChange={setMethod}>
+            <Select
+              value={method}
+              onValueChange={(value) => setMethod(value ?? "btc")}
+            >
               <SelectTrigger className="w-full h-10 text-xs font-semibold bg-background border-border">
                 <SelectValue placeholder="Select payment method" />
               </SelectTrigger>

@@ -106,7 +106,8 @@ export function PreferencesSettings() {
     }
   }, [currentLang]);
 
-  const handleLanguageChange = (val: string) => {
+  const handleLanguageChange = (val: string | null) => {
+    if (!val) return;
     setPreferences((prev) => ({ ...prev, language: val }));
     setLanguage(val as LanguageCode);
   };
@@ -185,7 +186,10 @@ export function PreferencesSettings() {
                 </Label>
                 <Select
                   value={preferences.currency}
-                  onValueChange={(val) => setPreferences((prev) => ({ ...prev, currency: val }))}
+                  onValueChange={(val) => {
+                    if (!val) return;
+                    setPreferences((prev) => ({ ...prev, currency: val }));
+                  }}
                 >
                   <SelectTrigger id="currency" className="text-xs h-9 bg-background w-full">
                     <SelectValue placeholder="Select currency" />
@@ -206,7 +210,10 @@ export function PreferencesSettings() {
                 </Label>
                 <Select
                   value={preferences.timezone}
-                  onValueChange={(val) => setPreferences((prev) => ({ ...prev, timezone: val }))}
+                  onValueChange={(val) => {
+                    if (!val) return;
+                    setPreferences((prev) => ({ ...prev, timezone: val }));
+                  }}
                 >
                   <SelectTrigger id="timezone" className="text-xs h-9 bg-background w-full">
                     <SelectValue placeholder="Select timezone" />

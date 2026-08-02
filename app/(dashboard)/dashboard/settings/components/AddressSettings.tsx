@@ -100,7 +100,7 @@ export function AddressSettings() {
     return country?.dialCode || "+1";
   };
 
-  const handleCountryChange = (countryCode: string) => {
+  const handleCountryChange = (countryCode: string | null) => {
     if (!countryCode) return;
     const country = countries.find((c) => c.code === countryCode);
     setAddress((prev) => ({

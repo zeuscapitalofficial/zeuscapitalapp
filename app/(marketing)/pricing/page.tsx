@@ -169,7 +169,7 @@ export default function PricingPage() {
 
               <Link href="/register" className="w-full mt-md">
                 <Button
-                  variant={plan.featured ? "primary" : "secondary"}
+                  variant={plan.featured ? "default" : "secondary"}
                   className="w-full h-10 justify-center"
                 >
                   Lease Hashing Power
@@ -262,7 +262,7 @@ export default function PricingPage() {
             </div>
 
             <Link href="/register" className="w-full mt-sm">
-              <Button variant="primary" className="w-full h-10 justify-center">
+              <Button variant="default" className="w-full h-10 justify-center">
                 Initiate Contract Lease
               </Button>
             </Link>

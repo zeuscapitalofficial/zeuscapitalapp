@@ -367,7 +367,7 @@ export default function StakingPage() {
 
                 <Slider
                   value={depositAmount}
-                  onValueChange={(vals) => setDepositAmount(vals)}
+                  onValueChange={(vals) => setDepositAmount(vals as number[])}
                   min={1000}
                   max={250000}
                   step={1000}

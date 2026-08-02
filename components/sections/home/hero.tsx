@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowRightIcon, PhoneCallIcon } from "lucide-react";
@@ -18,12 +19,12 @@ export function HeroSection() {
 
         {/* Content positioned in bottom left */}
         <div className="relative z-10 flex max-w-5xl flex-col gap-5">
-          <a
+          <Link
             className={cn(
               "group flex w-fit items-center gap-3 rounded-sm border bg-card p-1 shadow-xs",
               "fade-in slide-in-from-bottom-10 animate-in fill-mode-backwards transition-all delay-500 duration-500 ease-out",
             )}
-            href="#mining"
+            href="/#mining"
           >
             <div className="rounded-sm border bg-card px-1.5 py-0.5 shadow-sm">
               <p className="font-mono text-xs">LIVE</p>
@@ -35,7 +36,7 @@ export function HeroSection() {
             <div className="pr-1">
               <ArrowRightIcon className="size-3 -translate-x-0.5 duration-150 ease-out group-hover:translate-x-0.5" />
             </div>
-          </a>
+          </Link>
 
           <h1
             className={cn(
@@ -56,12 +57,16 @@ export function HeroSection() {
           </p>
 
           <div className="fade-in slide-in-from-bottom-10 flex w-fit animate-in items-center justify-center gap-3 fill-mode-backwards pt-2 delay-300 duration-500 ease-out">
-            <Button variant="outline">
-              <PhoneCallIcon data-icon="inline-start" /> Book a Call
-            </Button>
-            <Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">
-              Get started <ArrowRightIcon data-icon="inline-end" />
-            </Button>
+            <Link href="/contact">
+              <Button variant="outline">
+                <PhoneCallIcon data-icon="inline-start" /> Book a Call
+              </Button>
+            </Link>
+            <Link href="/sign-up">
+              <Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">
+                Get started <ArrowRightIcon data-icon="inline-end" />
+              </Button>
+            </Link>
           </div>
         </div>
       </div>

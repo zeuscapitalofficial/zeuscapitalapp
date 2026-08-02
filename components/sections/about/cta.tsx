@@ -22,7 +22,7 @@ export function AboutCtaSection() {
           safely into digital commodity brokerage and mining hosting.
         </p>
         <div className="flex flex-col sm:flex-row gap-md">
-          <Link href="/register">
+          <Link href="/sign-up">
             <Button
               variant="default"
               className="bg-white text-black hover:bg-neutral-100 gap-2"

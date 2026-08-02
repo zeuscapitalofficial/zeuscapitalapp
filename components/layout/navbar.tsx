@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { LogoIcon } from "@/components/ui/logo";
 import { useScroll } from "@/hooks/use-scroll";
@@ -30,8 +31,12 @@ export function Navbar() {
 				</div>
 				<div className="hidden items-center gap-2 md:flex">
 					<ThemeDropdownToggle />
-					<Button variant="outline">Sign In</Button>
-					<Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">Get Started</Button>
+					<Link href="/sign-in">
+						<Button variant="outline">Sign In</Button>
+					</Link>
+					<Link href="/sign-up">
+						<Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">Get Started</Button>
+					</Link>
 				</div>
 				<MobileNav />
 			</nav>

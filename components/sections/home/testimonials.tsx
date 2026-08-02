@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 
 export function TestimonialsSection() {
   return (
-    <section className="py-3xl px-md max-w-[88rem] mx-auto w-full">
+    <section id="testimonials" className="py-3xl px-md max-w-[88rem] mx-auto w-full">
       <div className="flex flex-col gap-md mb-3xl max-w-4xl">
         <span className="text-[13px] font-semibold uppercase tracking-wider text-muted-foreground/60">
           Client Testimonials

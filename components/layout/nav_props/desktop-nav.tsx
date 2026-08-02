@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
 	NavigationMenu,
 	NavigationMenuContent,
@@ -28,12 +29,12 @@ export function DesktopNav() {
 						<div className="p-2">
 							<p className="text-muted-foreground text-sm">
 								Interested?{" "}
-								<a
+								<Link
 									className="font-medium text-foreground hover:underline"
-									href="#"
+									href="/contact"
 								>
 									Schedule a demo
-								</a>
+								</Link>
 							</p>
 						</div>
 					</NavigationMenuContent>
@@ -66,9 +67,9 @@ export function DesktopNav() {
 					</NavigationMenuContent>
 				</NavigationMenuItem>
 				<NavigationMenuLink className="px-4">
-					<a className="rounded-md p-2" href="#">
+					<Link className="rounded-md p-2" href="/pricing">
 						Pricing
-					</a>
+					</Link>
 				</NavigationMenuLink>
 			</NavigationMenuList>
 		</NavigationMenu>

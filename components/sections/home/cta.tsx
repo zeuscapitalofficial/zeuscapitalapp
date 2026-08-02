@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { CreditCardIcon, ArrowRightIcon } from "lucide-react";
 
@@ -14,12 +15,16 @@ export function CtaSection() {
         </p>
       </div>
       <div className="flex items-center justify-center gap-2">
-        <Button className="" variant="secondary">
-          Contact OTC Desk
-        </Button>
-        <Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">
-          Open Custody Account <ArrowRightIcon data-icon="inline-end" />
-        </Button>
+        <Link href="/contact">
+          <Button className="" variant="secondary">
+            Contact OTC Desk
+          </Button>
+        </Link>
+        <Link href="/sign-up">
+          <Button className="bg-accent dark:bg-accent-foreground hover:bg-accent-foreground dark:hover:bg-accent text-background-foreground">
+            Open Custody Account <ArrowRightIcon data-icon="inline-end" />
+          </Button>
+        </Link>
       </div>
     </div>
   );

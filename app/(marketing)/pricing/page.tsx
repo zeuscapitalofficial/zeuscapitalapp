@@ -167,7 +167,7 @@ export default function PricingPage() {
                 </ul>
               </div>
 
-              <Link href="/register" className="w-full mt-md">
+              <Link href="/sign-up" className="w-full mt-md">
                 <Button
                   variant={plan.featured ? "default" : "secondary"}
                   className="w-full h-10 justify-center"
@@ -261,7 +261,7 @@ export default function PricingPage() {
               </div>
             </div>
 
-            <Link href="/register" className="w-full mt-sm">
+            <Link href="/sign-up" className="w-full mt-sm">
               <Button variant="default" className="w-full h-10 justify-center">
                 Initiate Contract Lease
               </Button>

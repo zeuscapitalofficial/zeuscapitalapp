@@ -94,7 +94,7 @@ export default function FeaturesPage() {
             request funding audits, and withdraw your balances instantly.
           </p>
           <div className="flex gap-sm mt-sm">
-            <Link href="/register">
+            <Link href="/sign-up">
               <Button variant="default" className="px-6 py-2.5">
                 Get Started
               </Button>

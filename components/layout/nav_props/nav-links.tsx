@@ -96,28 +96,28 @@ export const companyLinks: LinkItemType[] = [
 export const companyLinks2: LinkItemType[] = [
   {
     label: "Terms of Service",
-    href: "#",
+    href: "/contact",
     icon: (
       <FileTextIcon />
     ),
   },
   {
     label: "Privacy Policy",
-    href: "#",
+    href: "/contact",
     icon: (
       <ShieldIcon />
     ),
   },
   {
     label: "Refund Policy",
-    href: "#",
+    href: "/contact",
     icon: (
       <RotateCcwIcon />
     ),
   },
   {
     label: "Blog & Insights",
-    href: "#",
+    href: "/#blog",
     icon: (
       <LeafIcon />
     ),

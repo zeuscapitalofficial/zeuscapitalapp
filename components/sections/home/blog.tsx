@@ -29,7 +29,7 @@ export function BlogSection() {
           </div>
           <div className="shrink-0 mt-xs md:mt-0">
             <Link
-              href="/blog"
+              href="/#blog"
               className="inline-flex items-center gap-xs text-[14px] font-semibold text-foreground hover:underline group"
             >
               <span>View all posts</span>

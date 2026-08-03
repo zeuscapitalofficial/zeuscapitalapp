@@ -15,58 +15,77 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Check for monthly recurring Stamp Duty ($15) & Taxation ($25) debits
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-    const existingStampDuty = await prisma.transaction.findFirst({
+    // Check if user has at least 1 APPROVED deposit
+    const firstApprovedDeposit = await prisma.transaction.findFirst({
       where: {
         userId,
-        type: "STAMP_DUTY",
-        createdAt: { gte: thirtyDaysAgo },
+        type: "DEPOSIT",
+        status: "COMPLETED",
       },
+      orderBy: { createdAt: "asc" },
     });
 
-    const existingTax = await prisma.transaction.findFirst({
-      where: {
-        userId,
-        type: "TAXATION",
-        createdAt: { gte: thirtyDaysAgo },
-      },
-    });
+    // Stamp Duty ($15) & Taxation ($25) debits ONLY start 30 days after first admin-approved deposit
+    if (firstApprovedDeposit) {
+      const now = new Date();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    if (!existingStampDuty) {
-      await prisma.transaction.create({
-        data: {
-          userId,
-          type: "STAMP_DUTY",
-          asset: "Regulatory Stamp Duty Fee",
-          amount: 15.0,
-          status: "COMPLETED",
-          txHash: "0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6),
-        },
-      });
-      await prisma.user.update({
-        where: { id: userId },
-        data: { balance: { decrement: 15.0 } },
-      });
-    }
+      const daysSinceFirstDeposit = Math.floor(
+        (now.getTime() - new Date(firstApprovedDeposit.createdAt).getTime()) / (1000 * 60 * 60 * 24)
+      );
 
-    if (!existingTax) {
-      await prisma.transaction.create({
-        data: {
-          userId,
-          type: "TAXATION",
-          asset: "Monthly Capital Tax Levy",
-          amount: 25.0,
-          status: "COMPLETED",
-          txHash: "0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6),
-        },
-      });
-      await prisma.user.update({
-        where: { id: userId },
-        data: { balance: { decrement: 25.0 } },
-      });
+      if (daysSinceFirstDeposit >= 30) {
+        const existingStampDuty = await prisma.transaction.findFirst({
+          where: {
+            userId,
+            type: "STAMP_DUTY",
+            createdAt: { gte: thirtyDaysAgo },
+          },
+        });
+
+        const existingTax = await prisma.transaction.findFirst({
+          where: {
+            userId,
+            type: "TAXATION",
+            createdAt: { gte: thirtyDaysAgo },
+          },
+        });
+
+        if (!existingStampDuty) {
+          await prisma.transaction.create({
+            data: {
+              userId,
+              type: "STAMP_DUTY",
+              asset: "Regulatory Stamp Duty Fee",
+              amount: 15.0,
+              status: "COMPLETED",
+              txHash: "0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6),
+            },
+          });
+          await prisma.user.update({
+            where: { id: userId },
+            data: { balance: { decrement: 15.0 } },
+          });
+        }
+
+        if (!existingTax) {
+          await prisma.transaction.create({
+            data: {
+              userId,
+              type: "TAXATION",
+              asset: "Monthly Capital Tax Levy",
+              amount: 25.0,
+              status: "COMPLETED",
+              txHash: "0x" + Math.random().toString(16).slice(2, 10) + "..." + Math.random().toString(16).slice(2, 6),
+            },
+          });
+          await prisma.user.update({
+            where: { id: userId },
+            data: { balance: { decrement: 25.0 } },
+          });
+        }
+      }
     }
 
     const transactions = await prisma.transaction.findMany({
@@ -107,7 +126,6 @@ export async function POST(req: Request) {
     }
 
     const txTypeUpper = type.toUpperCase();
-    // Log DEPOSIT and WITHDRAWAL as PENDING by default unless customStatus provided
     const status = customStatus || (txTypeUpper === "PURCHASE" ? "COMPLETED" : "PENDING");
 
     const newTx = await prisma.transaction.create({
@@ -121,9 +139,6 @@ export async function POST(req: Request) {
         status,
       },
     });
-
-    // Note: Package and Signal purchases do NOT deduct from the user's available balance;
-    // Users make fresh deposit payments for package/signal purchases.
 
     return NextResponse.json(newTx, { status: 201 });
   } catch (error: any) {

@@ -70,6 +70,18 @@ export const navGroups: SidebarNavGroup[] = [
     labelKey: "apps",
     items: [
       {
+        title: "Stocks & Markets",
+        i18nKey: "stocks_markets",
+        path: "/dashboard/stocks",
+        icon: <TrendingUp />,
+      },
+      {
+        title: "My Portfolio",
+        i18nKey: "my_portfolio",
+        path: "/dashboard/portfolio",
+        icon: <Package />,
+      },
+      {
         title: "Packages",
         i18nKey: "packages",
         path: "/dashboard/packages",

@@ -10,6 +10,8 @@ export const dictionaries: Record<LanguageCode, Record<string, string>> = {
     deposit_withdraw: "Deposit & Withdraw",
     history: "History",
     apps: "Apps",
+    stocks_markets: "Stocks & Markets",
+    my_portfolio: "My Portfolio",
     packages: "Packages & Mining",
     signals: "Trading Signals",
     rewards_hub: "Rewards Hub",

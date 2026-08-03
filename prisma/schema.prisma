@@ -37,6 +37,7 @@ model User {
   quests            UserQuest[]
   streak            UserStreak?
   paymentMethods    PaymentMethod[]
+  portfolioItems    PortfolioItem[]
 
   @@unique([email])
   @@index([referredById])
@@ -254,3 +255,22 @@ model PaymentMethod {
   @@index([userId])
   @@map("payment_method")
 }
+
+model PortfolioItem {
+  id            String   @id @default(uuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol        String   // e.g. "BTC", "AAPL", "GOLD"
+  name          String   // e.g. "Bitcoin", "Apple Inc.", "Gold Spot"
+  category      String   // "crypto", "stock", "commodity", "forex"
+  quantity      Float    // number of shares / coins owned
+  avgBuyPrice   Float    // average purchase price in USD
+  currentPrice  Float    // current market / override price in USD
+  adminOverride Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@map("portfolio_item")
+}
+

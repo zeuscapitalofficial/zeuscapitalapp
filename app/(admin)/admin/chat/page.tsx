@@ -141,7 +141,7 @@ export default function AdminChatPage() {
   const [adminName, setAdminName] = useState("Admin");
   
   // New features state
-  const [filter, setFilter] = useState<"all" | "open" | "closed" | "unread">("all");
+  const [filter, setFilter] = useState<"open" | "closed" | "unread">("open");
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loadingUser, setLoadingUser] = useState(false);
   const [userIsTyping, setUserIsTyping] = useState(false);
@@ -377,8 +377,7 @@ export default function AdminChatPage() {
   const filteredConversations = conversations.filter((c) => {
     if (filter === "open") return c.isOpen;
     if (filter === "closed") return !c.isOpen;
-    if (filter === "unread") return c.unreadCount > 0;
-    return true;
+    return c.unreadCount > 0;
   });
 
   return (
@@ -428,7 +427,7 @@ export default function AdminChatPage() {
 
             {/* Responsive Filter Tabs */}
             <div className="flex items-center gap-0.5 bg-muted/60 p-0.5 rounded-lg overflow-x-auto max-w-full shrink-0">
-              {(["all", "open", "closed", "unread"] as const).map((tab) => (
+              {(["open", "closed", "unread"] as const).map((tab) => (
                 <button
                   key={tab}
                   type="button"
@@ -449,7 +448,7 @@ export default function AdminChatPage() {
             <div className="p-2 space-y-1">
               {filteredConversations.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-8">
-                  No {filter !== "all" ? filter : ""} conversations
+                  No {filter} conversations
                 </p>
               ) : (
                 filteredConversations.map((conv) => (

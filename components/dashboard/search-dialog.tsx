@@ -93,6 +93,14 @@ export function SearchDialog({ open, onOpenChange }: SearchDialogProps) {
             <LayoutDashboard className="mr-2 size-4 text-foreground" />
             <span>Overview Dashboard</span>
           </CommandItem>
+          <CommandItem onSelect={() => handleSelect("/dashboard/stocks")}>
+            <TrendingUp className="mr-2 size-4 text-emerald-500" />
+            <span>Global Stocks & Crypto Markets</span>
+          </CommandItem>
+          <CommandItem onSelect={() => handleSelect("/dashboard/portfolio")}>
+            <Package className="mr-2 size-4 text-purple-500" />
+            <span>My Investment Portfolio</span>
+          </CommandItem>
           <CommandItem onSelect={() => handleSelect("/dashboard/deposit-withdraw")}>
             <CreditCard className="mr-2 size-4 text-foreground" />
             <span>Deposit & Withdraw</span>

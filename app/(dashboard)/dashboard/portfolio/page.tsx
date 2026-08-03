@@ -1,257 +1,358 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, Shield, TrendingUp } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
 import {
-  DashboardAreaChart,
-  DashboardPieChart,
-} from "@/components/charts/dashboard-chart";
+  ArrowDownRight,
+  ArrowUpRight,
+  Briefcase,
+  Coins,
+  DollarSign,
+  Loader2,
+  PieChart,
+  RefreshCw,
+  Search,
+  ShoppingBag,
+  TrendingUp,
+  ShieldCheck,
+  Building2,
+  Flame,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatFullCurrency } from "@/components/formatter";
+import Link from "next/link";
 
-const chartData = [
-  { label: "Jan", value: 120000 },
-  { label: "Feb", value: 154000 },
-  { label: "Mar", value: 190000 },
-  { label: "Apr", value: 182000 },
-  { label: "May", value: 245000 },
-  { label: "Jun", value: 290000 },
-  { label: "Jul", value: 340602.8 },
-];
+interface PortfolioItem {
+  id: string;
+  symbol: string;
+  name: string;
+  category: string;
+  quantity: number;
+  avgBuyPrice: number;
+  currentPrice: number;
+  totalValue: number;
+  profitLoss: number;
+  profitLossPercentage: number;
+  adminOverride: boolean;
+  updatedAt: string;
+}
 
-const allocationData = [
-  { name: "Bitcoin (BTC)", value: 55, color: "#F7931A" },
-  { name: "USD Halo (USDH)", value: 20, color: "#8B7CFF" },
-  { name: "Ethereum (ETH)", value: 15, color: "#627EEA" },
-  { name: "Solana (SOL)", value: 10, color: "#14F195" },
-];
+export default function UserPortfolioPage() {
+  const [items, setItems] = useState<PortfolioItem[]>([]);
+  const [balance, setBalance] = useState<number>(0);
+  const [totalValue, setTotalValue] = useState<number>(0);
+  const [totalProfitLoss, setTotalProfitLoss] = useState<number>(0);
+  const [totalProfitLossPercentage, setTotalProfitLossPercentage] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
 
-const holdings = [
-  {
-    asset: "Bitcoin",
-    symbol: "BTC",
-    amount: "3.4810 BTC",
-    avgBuy: "$58,400.00",
-    currentPrice: "$68,520.00",
-    totalValue: "$238,518.12",
-    profit: "+$35,210.12",
-    profitPercent: "+17.3%",
-    color: "#F7931A",
-  },
-  {
-    asset: "USD Halo",
-    symbol: "USDH",
-    amount: "84,310.00 USDH",
-    avgBuy: "$1.00",
-    currentPrice: "$1.00",
-    totalValue: "$84,310.00",
-    profit: "$0.00",
-    profitPercent: "0.0%",
-    color: "#8B7CFF",
-  },
-  {
-    asset: "Ethereum",
-    symbol: "ETH",
-    amount: "14.50 ETH",
-    avgBuy: "$2,800.00",
-    currentPrice: "$3,450.00",
-    totalValue: "$50,025.00",
-    profit: "+$9,425.00",
-    profitPercent: "+23.2%",
-    color: "#627EEA",
-  },
-  {
-    asset: "Solana",
-    symbol: "SOL",
-    amount: "125.00 SOL",
-    avgBuy: "$110.00",
-    currentPrice: "$142.00",
-    totalValue: "$17,750.00",
-    profit: "+$4,000.00",
-    profitPercent: "+29.1%",
-    color: "#14F195",
-  },
-];
+  const fetchPortfolio = useCallback(async () => {
+    try {
+      setLoading(true);
+      const res = await fetch("/api/user/portfolio");
+      if (res.ok) {
+        const data = await res.json();
+        setItems(data.items || []);
+        setBalance(data.balance ?? 0);
+        setTotalValue(data.totalPortfolioValue ?? 0);
+        setTotalProfitLoss(data.totalProfitLoss ?? 0);
+        setTotalProfitLossPercentage(data.totalProfitLossPercentage ?? 0);
+      } else {
+        toast.error("Failed to load portfolio holdings");
+      }
+    } catch (err) {
+      console.error("Failed to fetch portfolio:", err);
+      toast.error("Network error while loading portfolio");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-export default function PortfolioPage() {
+  useEffect(() => {
+    fetchPortfolio();
+  }, [fetchPortfolio]);
+
+  const filteredItems = items.filter((item) => {
+    const matchesCategory =
+      categoryFilter === "all" || item.category.toLowerCase() === categoryFilter.toLowerCase();
+    const matchesSearch =
+      item.name.toLowerCase().includes(search.toLowerCase()) ||
+      item.symbol.toLowerCase().includes(search.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
+
+  const isTotalProfit = totalProfitLoss >= 0;
+
   return (
-    <div className="flex flex-col gap-lg select-none font-sans text-white bg-[#09090B] min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-md border-b border-[rgba(255,255,255,0.06)] pb-lg">
-        <div className="flex flex-col gap-2">
-          <span className="text-[12px] font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider">
-            Consolidated Assets
-          </span>
-          <h1 className="text-[32px] md:text-[36px] font-semibold tracking-[-0.03em] leading-tight text-white">
-            Portfolio Analytics
+    <div className="space-y-6 w-full max-w-full font-sans pb-12 overflow-x-hidden">
+      {/* Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">
+              Asset Custody
+            </span>
+            <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30 font-mono">
+              Live Holdings
+            </Badge>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight mt-1">
+            My Investment Portfolio
           </h1>
-          <p className="text-[15px] text-[rgba(255,255,255,0.72)] font-medium">
-            Detailed yield metrics, allocation breakdowns, and holdings balance
-            registers.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-2xl">
+            Track your purchased cryptocurrencies, equities, and commodities. Real-time market valuation and total profit/loss tracking.
           </p>
         </div>
-        <div className="flex gap-sm">
+
+        <div className="flex items-center gap-2">
           <Button
-            variant="outline"
-            className="border-[rgba(255,255,255,0.06)] bg-[#111114] text-[13px] font-semibold hover:bg-[#1D1D22] h-10 rounded-[14px]"
+            asChild
+            className="h-9 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs gap-1.5 shrink-0"
           >
-            Rebalance Portfolio
+            <Link href="/dashboard/stocks">
+              <ShoppingBag className="size-3.5" />
+              Buy More Assets
+            </Link>
+          </Button>
+
+          <Button
+            onClick={fetchPortfolio}
+            disabled={loading}
+            variant="outline"
+            size="sm"
+            className="h-9 text-xs gap-1.5 cursor-pointer shrink-0"
+          >
+            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+            Refresh
           </Button>
         </div>
       </div>
 
-      {/* Grid: Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-stretch">
-        <Card
-          variant="flat"
-          className="lg:col-span-8 p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-lg"
-        >
-          <div className="flex flex-col gap-xs">
-            <h3 className="text-[18px] font-semibold text-white">
-              Equity Curve
-            </h3>
-            <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-              Portfolio net equity growth over 6 months
-            </p>
+      {/* Portfolio Performance Summary Metrics */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
+        <Card className="p-4 border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+            <span>Total Portfolio Value</span>
+            <PieChart className="size-4 text-purple-500" />
           </div>
-          <div className="h-[240px] w-full">
-            <DashboardAreaChart
-              data={chartData}
-              valueType="currency"
-              strokeColor="#8B7CFF"
-            />
+          <div className="text-2xl font-bold text-foreground mt-2">
+            ${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            Combined asset value
+          </p>
         </Card>
 
-        <Card
-          variant="flat"
-          className="lg:col-span-4 p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col justify-between gap-md"
-        >
-          <div className="flex flex-col gap-xs">
-            <h3 className="text-[18px] font-semibold text-white">
-              Asset Allocation
-            </h3>
-            <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-              Distribution by asset class value
-            </p>
+        <Card className="p-4 border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+            <span>Unrealized P&L</span>
+            {isTotalProfit ? (
+              <TrendingUp className="size-4 text-emerald-500" />
+            ) : (
+              <ArrowDownRight className="size-4 text-rose-500" />
+            )}
           </div>
-          <div className="h-[180px] w-full relative">
-            <DashboardPieChart data={allocationData} />
-            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none mt-2">
-              <span className="text-[20px] font-semibold">4 Tokens</span>
-              <span className="text-[12px] text-[rgba(255,255,255,0.48)]">
-                Diverse
-              </span>
-            </div>
+          <div className={`text-2xl font-bold mt-2 ${isTotalProfit ? "text-emerald-600" : "text-rose-600"}`}>
+            {isTotalProfit ? "+" : ""}${totalProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })}
           </div>
-          <div className="flex flex-col gap-2">
-            {allocationData.map((asset) => (
-              <div
-                key={asset.name}
-                className="flex items-center justify-between text-[13px] font-medium"
-              >
-                <div className="flex items-center gap-sm">
-                  <span
-                    className="w-2.5 h-2.5 rounded-full"
-                    style={{ backgroundColor: asset.color }}
-                  />
-                  <span className="text-[rgba(255,255,255,0.72)]">
-                    {asset.name.split(" ")[0]}
-                  </span>
-                </div>
-                <span className="text-white font-semibold">{asset.value}%</span>
-              </div>
-            ))}
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            {isTotalProfit ? "+" : ""}{totalProfitLossPercentage.toFixed(2)}% overall return
+          </p>
+        </Card>
+
+        <Card className="p-4 border-border bg-card shadow-xs">
+          <div className="flex items-center justify-between text-xs text-muted-foreground font-semibold">
+            <span>Available Liquid Balance</span>
+            <DollarSign className="size-4 text-amber-500" />
           </div>
+          <div className="text-2xl font-bold text-emerald-600 mt-2">
+            ${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">
+            Ready for new investments
+          </p>
         </Card>
       </div>
 
-      {/* Holdings Table */}
-      <Card
-        variant="flat"
-        className="p-lg bg-[#111114] border border-[rgba(255,255,255,0.06)] rounded-[20px] flex flex-col gap-md"
-      >
-        <div className="flex justify-between items-center pb-md border-b border-[rgba(255,255,255,0.06)]">
-          <div className="flex flex-col gap-xs">
-            <h3 className="text-[18px] font-semibold text-white">Holdings</h3>
-            <p className="text-[13px] text-[rgba(255,255,255,0.48)] font-medium">
-              Asset weights and profit registers
-            </p>
-          </div>
-          <span className="text-[13px] text-[rgba(255,255,255,0.48)] flex items-center gap-xs font-semibold">
-            <Shield className="w-4 h-4 text-[#8B7CFF]" /> Secure Cold Vault
-            Storage
-          </span>
+      {/* Filter Bar & Search */}
+      <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
+        <div className="flex p-1 rounded-xl bg-muted border border-border overflow-x-auto max-w-full">
+          {[
+            { id: "all", label: "All Holdings" },
+            { id: "crypto", label: "Cryptocurrencies" },
+            { id: "stock", label: "Stocks" },
+            { id: "commodity", label: "Commodities" },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setCategoryFilter(tab.id)}
+              className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                categoryFilter === tab.id
+                  ? "bg-accent-foreground text-background shadow-xs font-bold"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse select-none">
-            <thead>
-              <tr className="border-b border-[rgba(255,255,255,0.04)] text-[12px] font-semibold text-[rgba(255,255,255,0.48)] uppercase tracking-wider h-[40px]">
-                <th className="py-2 pr-4">Asset</th>
-                <th className="py-2 px-4 text-right">Holdings</th>
-                <th className="py-2 px-4 text-right">Avg. Entry</th>
-                <th className="py-2 px-4 text-right">Market Price</th>
-                <th className="py-2 px-4 text-right">Total Equity</th>
-                <th className="py-2 pl-4 text-right">Unrealized Return</th>
-              </tr>
-            </thead>
-            <tbody>
-              {holdings.map((holding) => (
-                <tr
-                  key={holding.symbol}
-                  className="border-b border-[rgba(255,255,255,0.04)] last:border-0 hover:bg-[rgba(255,255,255,0.01)] transition-colors text-[14px] h-[56px] font-medium"
-                >
-                  <td className="py-3 pr-4 flex items-center gap-sm">
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: holding.color }}
-                    />
-                    <div>
-                      <span className="font-semibold text-white block">
-                        {holding.asset}
-                      </span>
-                      <span className="text-[12px] text-[rgba(255,255,255,0.48)]">
-                        {holding.symbol}
-                      </span>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-right font-semibold">
-                    {holding.amount}
-                  </td>
-                  <td className="py-3 px-4 text-right text-[rgba(255,255,255,0.72)]">
-                    {holding.avgBuy}
-                  </td>
-                  <td className="py-3 px-4 text-right text-[rgba(255,255,255,0.72)]">
-                    {holding.currentPrice}
-                  </td>
-                  <td className="py-3 px-4 text-right font-semibold">
-                    {holding.totalValue}
-                  </td>
-                  <td className="py-3 pl-4 text-right">
-                    <span
-                      className={`block font-semibold ${
-                        holding.profit.startsWith("+")
-                          ? "text-[#22C55E]"
-                          : "text-[rgba(255,255,255,0.48)]"
-                      }`}
-                    >
-                      {holding.profit}
-                    </span>
-                    <span
-                      className={`text-[12px] block ${
-                        holding.profitPercent.startsWith("+")
-                          ? "text-[#22C55E]"
-                          : "text-[rgba(255,255,255,0.48)]"
-                      }`}
-                    >
-                      {holding.profitPercent}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="relative w-full lg:w-72">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Search holdings..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9 text-xs bg-card border-border text-foreground w-full"
+          />
         </div>
+      </div>
+
+      {/* Holdings Table */}
+      <Card className="border-border bg-card shadow-xs overflow-hidden max-w-full">
+        <CardHeader className="border-b border-border py-3.5 px-4 flex flex-row items-center justify-between">
+          <CardTitle className="text-sm font-bold text-foreground">
+            Asset Holdings Breakdown
+          </CardTitle>
+          <span className="text-xs text-muted-foreground font-mono">
+            {filteredItems.length} asset{filteredItems.length === 1 ? "" : "s"} owned
+          </span>
+        </CardHeader>
+
+        <CardContent className="p-0 overflow-x-auto w-full max-w-full">
+          <Table className="w-full min-w-[780px] whitespace-nowrap">
+            <TableHeader>
+              <TableRow className="border-border bg-muted/30">
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Asset</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Category</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Quantity Owned</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Avg Buy Price</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Current Price</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">Total Value (USD)</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3 text-right">P&L (%)</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody>
+              {loading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <TableRow key={i} className="h-14 border-border">
+                    <TableCell><Skeleton className="h-8 w-36" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-16" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
+                    <TableCell><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                  </TableRow>
+                ))
+              ) : filteredItems.length > 0 ? (
+                filteredItems.map((item) => {
+                  const isPositive = item.profitLoss >= 0;
+
+                  return (
+                    <TableRow
+                      key={item.id}
+                      className="border-border hover:bg-muted/40 transition-colors text-xs font-medium"
+                    >
+                      {/* Asset Name & Symbol */}
+                      <TableCell className="py-3">
+                        <div className="flex items-center gap-2.5">
+                          <div className="size-7 rounded-full bg-purple-500/10 text-purple-600 flex items-center justify-center font-bold text-xs shrink-0">
+                            {item.symbol.slice(0, 3)}
+                          </div>
+                          <div>
+                            <span className="font-extrabold text-foreground block">
+                              {item.name}
+                            </span>
+                            <span className="text-[11px] text-muted-foreground font-mono uppercase block">
+                              {item.symbol}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+
+                      {/* Category */}
+                      <TableCell className="py-3">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] font-semibold capitalize bg-purple-500/10 text-purple-600 border-purple-500/30"
+                        >
+                          {item.category}
+                        </Badge>
+                      </TableCell>
+
+                      {/* Quantity Owned */}
+                      <TableCell className="py-3 font-mono font-bold text-foreground">
+                        {item.quantity.toLocaleString(undefined, {
+                          maximumFractionDigits: 6,
+                        })}
+                      </TableCell>
+
+                      {/* Avg Buy Price */}
+                      <TableCell className="py-3 font-mono text-muted-foreground">
+                        ${item.avgBuyPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </TableCell>
+
+                      {/* Current Price */}
+                      <TableCell className="py-3 font-mono font-bold text-foreground">
+                        ${item.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        {item.adminOverride && (
+                          <Badge variant="outline" className="ml-1.5 text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-mono">
+                            Admin Set
+                          </Badge>
+                        )}
+                      </TableCell>
+
+                      {/* Total Value */}
+                      <TableCell className="py-3 font-mono font-extrabold text-foreground text-sm">
+                        ${item.totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      </TableCell>
+
+                      {/* P&L */}
+                      <TableCell className="py-3 text-right">
+                        <div className={`inline-flex items-center justify-end gap-1 font-bold ${
+                          isPositive ? "text-emerald-500" : "text-rose-500"
+                        }`}>
+                          {isPositive ? (
+                            <ArrowUpRight className="size-3.5" />
+                          ) : (
+                            <ArrowDownRight className="size-3.5" />
+                          )}
+                          <span>
+                            {isPositive ? "+" : ""}${item.profitLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })} (
+                            {isPositive ? "+" : ""}
+                            {item.profitLossPercentage.toFixed(2)}%)
+                          </span>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={7} className="py-12 text-center text-xs text-muted-foreground">
+                    No holdings in your portfolio yet. Click "Buy More Assets" to invest!
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
       </Card>
     </div>
   );

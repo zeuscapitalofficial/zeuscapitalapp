@@ -22,6 +22,7 @@ import {
   Gift,
   Share2,
   Calendar,
+  ShoppingBag,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -115,6 +116,97 @@ export default function AdminUsersPage() {
   const [alertMessage, setAlertMessage] = useState("");
   const [alertType, setAlertType] = useState("INFO");
   const [isDispatchingAlert, setIsDispatchingAlert] = useState(false);
+
+  // Portfolio Override Modal State
+  const [portfolioTarget, setPortfolioTarget] = useState<UserProfile | null>(null);
+  const [userPortfolioItems, setUserPortfolioItems] = useState<any[]>([]);
+  const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(false);
+  const [editingPortfolioItem, setEditingPortfolioItem] = useState<any | null>(null);
+  const [editPortfolioQty, setEditPortfolioQty] = useState("");
+  const [editPortfolioPrice, setEditPortfolioPrice] = useState("");
+  const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
+
+  // New Asset Form
+  const [newSymbol, setNewSymbol] = useState("");
+  const [newName, setNewName] = useState("");
+  const [newCategory, setNewCategory] = useState("crypto");
+  const [newQty, setNewQty] = useState("");
+  const [newPrice, setNewPrice] = useState("");
+
+  const fetchUserPortfolio = async (userId: string) => {
+    try {
+      setIsLoadingPortfolio(true);
+      const res = await fetch(`/api/admin/portfolio?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserPortfolioItems(data.items || []);
+      }
+    } catch (err) {
+      toast.error("Failed to load user portfolio");
+    } font-sans finally {
+      setIsLoadingPortfolio(false);
+    }
+  };
+
+  const openPortfolioModal = (user: UserProfile) => {
+    setPortfolioTarget(user);
+    setEditingPortfolioItem(null);
+    fetchUserPortfolio(user.id);
+  };
+
+  const handleSavePortfolioItem = async (itemId?: string) => {
+    if (!portfolioTarget) return;
+    setIsSavingPortfolio(true);
+
+    try {
+      let body: any = {};
+      if (itemId) {
+        body = {
+          itemId,
+          quantity: editPortfolioQty,
+          currentPrice: editPortfolioPrice,
+        };
+      } else {
+        if (!newSymbol || !newName || !newQty || !newPrice) {
+          toast.error("Please fill in all asset fields");
+          setIsSavingPortfolio(false);
+          return;
+        }
+        body = {
+          userId: portfolioTarget.id,
+          symbol: newSymbol,
+          name: newName,
+          category: newCategory,
+          quantity: newQty,
+          currentPrice: newPrice,
+          avgBuyPrice: newPrice,
+        };
+      }
+
+      const res = await fetch("/api/admin/portfolio", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const errData = await res.json();
+        throw new Error(errData.error || "Save failed");
+      }
+
+      toast.success("User portfolio updated successfully!");
+      setEditingPortfolioItem(null);
+      setNewSymbol("");
+      setNewName("");
+      setNewQty("");
+      setNewPrice("");
+      fetchUserPortfolio(portfolioTarget.id);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to save portfolio override");
+    } finally {
+      setIsSavingPortfolio(false);
+    }
+  };
 
   // Load database users
   async function loadUsers() {
@@ -351,12 +443,12 @@ export default function AdminUsersPage() {
             <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
               Admins & Staff
             </CardTitle>
-            <div className="size-8 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center">
+            <div className="size-8 rounded-lg bg-amber-500/10 text-amber-600 flex items-center justify-center">
               <ShieldCheck className="size-4" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
+            <div className="text-2xl font-bold text-amber-600">
               {loading ? "..." : metrics.admins}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
@@ -595,6 +687,14 @@ export default function AdminUsersPage() {
                             >
                               <Edit3 className="size-3.5 text-emerald-500" />
                               Adjust Balances
+                            </DropdownMenuItem>
+
+                            <DropdownMenuItem
+                              onClick={() => openPortfolioModal(user)}
+                              className="text-xs gap-2 cursor-pointer"
+                            >
+                              <ShoppingBag className="size-3.5 text-purple-500" />
+                              Manage User Portfolio
                             </DropdownMenuItem>
 
                             <DropdownMenuItem
@@ -1100,6 +1200,180 @@ export default function AdminUsersPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── 6. ADMIN PORTFOLIO OVERRIDE DIALOG ── */}
+      <Dialog
+        open={Boolean(portfolioTarget)}
+        onOpenChange={(open) => {
+          if (!open) setPortfolioTarget(null);
+        }}
+      >
+        <DialogContent className="max-w-2xl bg-card border-border">
+          <DialogHeader>
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <ShoppingBag className="size-5 text-purple-500" />
+              Manage User Portfolio ({portfolioTarget?.name})
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              View, edit quantities, and overwrite current token/share values for user account {portfolioTarget?.email}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Holdings Table */}
+            <div className="border border-border rounded-lg overflow-x-auto max-h-60 overflow-y-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border bg-muted/40">
+                    <TableHead className="text-[11px] font-bold py-2">Asset</TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">Category</TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">Quantity</TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">Current Price</TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">Total Value</TableHead>
+                    <TableHead className="text-[11px] font-bold py-2 text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+
+                <TableBody>
+                  {isLoadingPortfolio ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-6 text-center text-xs text-muted-foreground">
+                        Loading user portfolio holdings...
+                      </TableCell>
+                    </TableRow>
+                  ) : userPortfolioItems.length > 0 ? (
+                    userPortfolioItems.map((item) => {
+                      const isEditing = editingPortfolioItem?.id === item.id;
+
+                      return (
+                        <TableRow key={item.id} className="border-border text-xs">
+                          <TableCell className="font-bold py-2">
+                            {item.name} ({item.symbol})
+                          </TableCell>
+                          <TableCell className="capitalize py-2 text-muted-foreground">
+                            {item.category}
+                          </TableCell>
+                          <TableCell className="py-2 font-mono">
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                value={editPortfolioQty}
+                                onChange={(e) => setEditPortfolioQty(e.target.value)}
+                                className="h-7 w-24 text-xs font-mono"
+                              />
+                            ) : (
+                              item.quantity.toLocaleString()
+                            )}
+                          </TableCell>
+                          <TableCell className="py-2 font-mono">
+                            {isEditing ? (
+                              <Input
+                                type="number"
+                                value={editPortfolioPrice}
+                                onChange={(e) => setEditPortfolioPrice(e.target.value)}
+                                className="h-7 w-24 text-xs font-mono"
+                              />
+                            ) : (
+                              `$${item.currentPrice.toLocaleString()}`
+                            )}
+                          </TableCell>
+                          <TableCell className="py-2 font-bold font-mono text-emerald-500">
+                            ${(item.quantity * item.currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                          </TableCell>
+                          <TableCell className="py-2 text-right">
+                            {isEditing ? (
+                              <Button
+                                size="sm"
+                                onClick={() => handleSavePortfolioItem(item.id)}
+                                disabled={isSavingPortfolio}
+                                className="h-7 px-2.5 text-[11px] font-bold bg-emerald-600 text-white cursor-pointer"
+                              >
+                                Save
+                              </Button>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingPortfolioItem(item);
+                                  setEditPortfolioQty(item.quantity.toString());
+                                  setEditPortfolioPrice(item.currentPrice.toString());
+                                }}
+                                className="h-7 px-2 text-[11px] font-semibold cursor-pointer"
+                              >
+                                Override
+                              </Button>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={6} className="py-6 text-center text-xs text-muted-foreground">
+                        User owns no portfolio assets. Add an asset below!
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+
+            {/* Grant / Add New Asset for User */}
+            <div className="p-3 rounded-lg bg-muted/40 border border-border space-y-3">
+              <span className="font-bold text-xs text-foreground block">
+                Grant / Add New Asset Entry directly to User Portfolio:
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                <Input
+                  placeholder="Symbol (BTC)"
+                  value={newSymbol}
+                  onChange={(e) => setNewSymbol(e.target.value)}
+                  className="h-8 text-xs font-mono uppercase"
+                />
+                <Input
+                  placeholder="Name (Bitcoin)"
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  className="h-8 text-xs"
+                />
+                <Select value={newCategory} onValueChange={(v) => v && setNewCategory(v)}>
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="crypto">Crypto</SelectItem>
+                    <SelectItem value="stock">Stock</SelectItem>
+                    <SelectItem value="commodity">Commodity</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder="Quantity"
+                  value={newQty}
+                  onChange={(e) => setNewQty(e.target.value)}
+                  className="h-8 text-xs font-mono"
+                />
+                <Input
+                  type="number"
+                  placeholder="Price (USD)"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  className="h-8 text-xs font-mono"
+                />
+              </div>
+              <Button
+                size="sm"
+                onClick={() => handleSavePortfolioItem()}
+                disabled={isSavingPortfolio}
+                className="w-full h-8 text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
+              >
+                {isSavingPortfolio ? "Granting..." : "Add Asset to User Portfolio"}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

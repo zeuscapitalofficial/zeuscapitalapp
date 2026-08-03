@@ -70,7 +70,7 @@ const startServer = async () => {
       try {
         const user = await prisma.user.findUnique({
           where: { id: userId },
-          select: { id: true, role: true, name: true },
+          select: { id: true, role: true, name: true, email: true, image: true },
         });
         if (!user) {
           socket.emit("auth-error", { message: "User not found" });
@@ -79,6 +79,8 @@ const startServer = async () => {
         socket.data.userId = user.id;
         socket.data.role = user.role;
         socket.data.userName = user.name;
+        socket.data.userEmail = user.email;
+        socket.data.userImage = user.image ?? null;
 
         // Join user specific room
         socket.join(`user:${user.id}`);
@@ -139,13 +141,21 @@ const startServer = async () => {
         userId: string;
         senderRole: "USER" | "ADMIN";
         content: string;
-        senderName: string;
+        senderName?: string;
       }) => {
         if (!socket.data.userId) return;
         try {
-          const { conversationId, userId, senderRole, content, senderName } = data;
+          const { conversationId, userId, senderRole, content } = data;
 
           if (!content?.trim() || !userId) return;
+          if (socket.data.userId !== userId) {
+            socket.emit("auth-error", { message: "Authenticated user mismatch" });
+            return;
+          }
+
+          const senderName = socket.data.userName ?? data.senderName ?? "User";
+          const senderImage = socket.data.userImage ?? null;
+          const senderEmail = socket.data.userEmail ?? "";
 
           let convId = conversationId;
 
@@ -167,6 +177,8 @@ const startServer = async () => {
               id: convId,
               userId,
               senderName,
+              senderImage,
+              senderEmail,
               lastMessage: content.trim(),
               lastAt: new Date().toISOString(),
             });
@@ -195,6 +207,8 @@ const startServer = async () => {
             senderId: message.senderId,
             senderRole: message.senderRole,
             senderName,
+            senderImage,
+            senderEmail,
             content: message.content,
             isRead: message.isRead,
             createdAt: message.createdAt.toISOString(),

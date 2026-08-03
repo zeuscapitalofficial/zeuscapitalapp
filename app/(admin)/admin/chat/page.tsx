@@ -1,56 +1,11 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useSocket } from "@/components/providers/socket-provider";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupTextarea,
-} from "@/components/ui/input-group";
-import {
-  MessageScrollerProvider,
-  MessageScroller,
-  MessageScrollerViewport,
-  MessageScrollerContent,
-  MessageScrollerItem,
-  MessageScrollerButton,
-} from "@/components/ui/message-scroller";
-import {
-  MessageGroup,
-  Message,
-  MessageAvatar,
-  MessageContent,
-  MessageHeader,
-  MessageFooter,
-} from "@/components/ui/message";
 import { Bubble, BubbleContent } from "@/components/ui/bubble";
-import {
-  ArrowUpIcon,
-  Headphones,
-  MessageSquare,
-  Users,
-  Wifi,
-  WifiOff,
-  Zap,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ShieldCheck,
-  User,
-  DollarSign,
-  Calendar,
-} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
   Empty,
   EmptyDescription,
@@ -58,8 +13,50 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
-import { useSocket } from "@/components/providers/socket-provider";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupTextarea,
+} from "@/components/ui/input-group";
+import {
+  Message,
+  MessageAvatar,
+  MessageContent,
+  MessageFooter,
+  MessageGroup,
+  MessageHeader,
+} from "@/components/ui/message";
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "@/components/ui/message-scroller";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
+import {
+  ArrowUpIcon,
+  Calendar,
+  DollarSign,
+  Headphones,
+  MessageSquare,
+  ShieldCheck,
+  User,
+  Users,
+  Wifi,
+  WifiOff,
+  Zap
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 // ── Types ──────────────────────────────────────────────────────────
 interface Conversation {
@@ -79,6 +76,8 @@ interface SocketMessage {
   senderId: string;
   senderRole: "USER" | "ADMIN";
   senderName: string;
+  senderImage?: string | null;
+  senderEmail?: string | null;
   content: string;
   createdAt: string;
 }
@@ -192,7 +191,15 @@ export default function AdminChatPage() {
       socket.emit("join-conversation", selectedConvRef.current.id);
     }
 
-    const handleNewConv = (data: { id: string; userId: string; senderName: string; lastMessage: string; lastAt: string }) => {
+    const handleNewConv = (data: {
+      id: string;
+      userId: string;
+      senderName: string;
+      senderImage?: string | null;
+      senderEmail?: string | null;
+      lastMessage: string;
+      lastAt: string;
+    }) => {
       setConversations((prev) => {
         if (prev.some((c) => c.id === data.id)) return prev;
         const newConv: Conversation = {
@@ -202,7 +209,12 @@ export default function AdminChatPage() {
           lastMessage: data.lastMessage,
           lastAt: data.lastAt,
           createdAt: data.lastAt,
-          user: { id: data.userId, name: data.senderName, email: "", image: null },
+          user: {
+            id: data.userId,
+            name: data.senderName || "User",
+            email: data.senderEmail ?? "",
+            image: data.senderImage ?? null,
+          },
           unreadCount: 1,
         };
         return [newConv, ...prev];

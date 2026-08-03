@@ -212,6 +212,7 @@ export default function AdminUsersPage() {
       setNewQty("");
       setNewPrice("");
       fetchUserPortfolio(portfolioTarget.id);
+      loadUsers();
     } catch (err: any) {
       toast.error(err.message || "Failed to save portfolio override");
     } finally {

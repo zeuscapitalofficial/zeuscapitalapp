@@ -27,13 +27,31 @@ export async function GET() {
     const users = await prisma.user.findMany({
       include: {
         kyc: true,
+        portfolioItems: {
+          select: {
+            quantity: true,
+            currentPrice: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
       },
     });
 
-    return NextResponse.json(users);
+    // Calculate total amount (total profit + portfolio items quantity * price) for each user
+    const formattedUsers = users.map((u) => {
+      const portfolioValue = u.portfolioItems.reduce(
+        (acc, item) => acc + item.quantity * item.currentPrice,
+        0
+      );
+      return {
+        ...u,
+        totalProfit: (u.totalProfit ?? 0) + portfolioValue,
+      };
+    });
+
+    return NextResponse.json(formattedUsers);
   } catch (error: any) {
     console.error("GET users list failed:", error);
     return NextResponse.json(

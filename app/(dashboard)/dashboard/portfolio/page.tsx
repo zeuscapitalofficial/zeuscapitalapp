@@ -175,7 +175,7 @@ export default function UserPortfolioPage() {
       {/* SIMPLIFIED PORTFOLIO TABLE: NAME (+ Amount Underneath), PRICE, UP/DOWN INDICATOR */}
       <Card className="border-border bg-card shadow-xs overflow-hidden max-w-full">
         <CardContent className="p-0 overflow-x-auto w-full max-w-full">
-          <Table className="w-full min-w-[500px] whitespace-nowrap">
+          <Table className="w-full min-w-125 whitespace-nowrap">
             <TableHeader>
               <TableRow className="border-border bg-muted/30">
                 <TableHead className="text-xs  text-muted-foreground py-3">
@@ -237,14 +237,6 @@ export default function UserPortfolioPage() {
                         {showBalance
                           ? `$${item.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                           : "$••••"}
-                        {item.adminOverride && (
-                          <Badge
-                            variant="outline"
-                            className="ml-2 text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-mono"
-                          >
-                            Admin Set
-                          </Badge>
-                        )}
                       </TableCell>
 
                       {/* Up or Down Performance Indicator */}

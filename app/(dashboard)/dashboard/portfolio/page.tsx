@@ -48,7 +48,8 @@ export default function UserPortfolioPage() {
   const [items, setItems] = useState<PortfolioItem[]>([]);
   const [totalValue, setTotalValue] = useState<number>(0);
   const [totalProfitLoss, setTotalProfitLoss] = useState<number>(0);
-  const [totalProfitLossPercentage, setTotalProfitLossPercentage] = useState<number>(0);
+  const [totalProfitLossPercentage, setTotalProfitLossPercentage] =
+    useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [showBalance, setShowBalance] = useState(true);
@@ -81,7 +82,7 @@ export default function UserPortfolioPage() {
   const filteredItems = items.filter(
     (item) =>
       item.name.toLowerCase().includes(search.toLowerCase()) ||
-      item.symbol.toLowerCase().includes(search.toLowerCase())
+      item.symbol.toLowerCase().includes(search.toLowerCase()),
   );
 
   const isTotalProfit = totalProfitLoss >= 0;
@@ -91,19 +92,12 @@ export default function UserPortfolioPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-purple-500 uppercase tracking-wider">
-              Asset Custody
-            </span>
-            <Badge variant="outline" className="text-[10px] bg-purple-500/10 text-purple-600 border-purple-500/30 font-mono">
-              Live Holdings
-            </Badge>
-          </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight mt-1">
             My Portfolio
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-[640px]">
-            Track your purchased cryptocurrencies, stocks, and commodities in real time.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-160">
+            Track your purchased cryptocurrencies, stocks, and commodities in
+            real time.
           </p>
         </div>
 
@@ -114,42 +108,29 @@ export default function UserPortfolioPage() {
               Buy Assets
             </Link>
           }
-          className="h-9 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs gap-1.5 shrink-0 self-start sm:self-center"
+          className="h-9 text-xs  bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs gap-1.5 shrink-0 self-start sm:self-center"
         />
       </div>
 
       {/* SINGLE CLEAN TOTAL PORTFOLIO VALUE CARD WITH SHOW/HIDE BALANCE EYE TOGGLE */}
-      <Card className="p-6 border-border bg-card shadow-xs">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <PieChart className="size-4 text-purple-500" />
-            <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-              Total Portfolio Valuation
-            </span>
-          </div>
-
-          <Button
-            size="icon"
-            variant="ghost"
-            onClick={() => setShowBalance(!showBalance)}
-            className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
-            title={showBalance ? "Hide Balance" : "Show Balance"}
-          >
-            {showBalance ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
-          </Button>
-        </div>
-
-        <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 mt-3">
-          <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight font-mono">
+      <div className="flex flex-col sm:flex-row sm:items-baseline justify-between gap-2 my-3">
+        <div className="">
+          <div className="text-3xl sm:text-4xl font-mono">
             {showBalance
               ? `$${totalValue.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
               : "$••••••••"}
           </div>
 
-          <div className={`inline-flex items-center gap-1 font-bold text-sm ${
-            isTotalProfit ? "text-emerald-500" : "text-rose-500"
-          }`}>
-            {isTotalProfit ? <ArrowUpRight className="size-4" /> : <ArrowDownRight className="size-4" />}
+          <div
+            className={`inline-flex items-center pt-2 gap-1  text-sm ${
+              isTotalProfit ? "text-emerald-500" : "text-rose-500"
+            }`}
+          >
+            {isTotalProfit ? (
+              <ArrowUpRight className="size-4" />
+            ) : (
+              <ArrowDownRight className="size-4" />
+            )}
             <span>
               {showBalance
                 ? `${isTotalProfit ? "+" : ""}$${totalProfitLoss.toLocaleString(undefined, { minimumFractionDigits: 2 })} (${isTotalProfit ? "+" : ""}${totalProfitLossPercentage.toFixed(2)}%)`
@@ -157,11 +138,25 @@ export default function UserPortfolioPage() {
             </span>
           </div>
         </div>
-      </Card>
+
+        <Button
+          size="icon"
+          variant="ghost"
+          onClick={() => setShowBalance(!showBalance)}
+          className="size-8 text-muted-foreground hover:text-foreground cursor-pointer"
+          title={showBalance ? "Hide Balance" : "Show Balance"}
+        >
+          {showBalance ? (
+            <EyeOff className="size-4" />
+          ) : (
+            <Eye className="size-4" />
+          )}
+        </Button>
+      </div>
 
       {/* Search Bar & Table Header */}
       <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-        <h2 className="text-sm font-bold text-foreground">
+        <h2 className="text-sm  text-foreground">
           Owned Holdings ({filteredItems.length})
         </h2>
 
@@ -183,9 +178,15 @@ export default function UserPortfolioPage() {
           <Table className="w-full min-w-[500px] whitespace-nowrap">
             <TableHeader>
               <TableRow className="border-border bg-muted/30">
-                <TableHead className="text-xs font-bold text-muted-foreground py-3">Name & Holdings</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground py-3">Current Price</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground py-3 text-right">Performance (Up / Down)</TableHead>
+                <TableHead className="text-xs  text-muted-foreground py-3">
+                  Name & Holdings
+                </TableHead>
+                <TableHead className="text-xs  text-muted-foreground py-3">
+                  Current Price
+                </TableHead>
+                <TableHead className="text-xs  text-muted-foreground py-3 text-right">
+                  Performance (Up / Down)
+                </TableHead>
               </TableRow>
             </TableHeader>
 
@@ -193,9 +194,15 @@ export default function UserPortfolioPage() {
               {loading ? (
                 Array.from({ length: 3 }).map((_, i) => (
                   <TableRow key={i} className="h-14 border-border">
-                    <TableCell><Skeleton className="h-8 w-36" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-24" /></TableCell>
-                    <TableCell><Skeleton className="h-5 w-20 ml-auto" /></TableCell>
+                    <TableCell>
+                      <Skeleton className="h-8 w-36" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-24" />
+                    </TableCell>
+                    <TableCell>
+                      <Skeleton className="h-5 w-20 ml-auto" />
+                    </TableCell>
                   </TableRow>
                 ))
               ) : filteredItems.length > 0 ? (
@@ -214,18 +221,27 @@ export default function UserPortfolioPage() {
                             {item.name} ({item.symbol})
                           </span>
                           <span className="text-[11px] text-muted-foreground font-mono block">
-                            Amount: {showBalance ? item.quantity.toLocaleString(undefined, { maximumFractionDigits: 6 }) : "••••"} {item.symbol}
+                            Amount:{" "}
+                            {showBalance
+                              ? item.quantity.toLocaleString(undefined, {
+                                  maximumFractionDigits: 6,
+                                })
+                              : "••••"}{" "}
+                            {item.symbol}
                           </span>
                         </div>
                       </TableCell>
 
                       {/* Current Price */}
-                      <TableCell className="py-3 font-mono font-bold text-foreground text-sm">
+                      <TableCell className="py-3 font-mono  text-foreground text-sm">
                         {showBalance
                           ? `$${item.currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2 })}`
                           : "$••••"}
                         {item.adminOverride && (
-                          <Badge variant="outline" className="ml-2 text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-mono">
+                          <Badge
+                            variant="outline"
+                            className="ml-2 text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/30 font-mono"
+                          >
                             Admin Set
                           </Badge>
                         )}
@@ -233,9 +249,11 @@ export default function UserPortfolioPage() {
 
                       {/* Up or Down Performance Indicator */}
                       <TableCell className="py-3 text-right">
-                        <div className={`inline-flex items-center justify-end gap-1 font-bold ${
-                          isPositive ? "text-emerald-500" : "text-rose-500"
-                        }`}>
+                        <div
+                          className={`inline-flex items-center justify-end gap-1  ${
+                            isPositive ? "text-emerald-500" : "text-rose-500"
+                          }`}
+                        >
                           {isPositive ? (
                             <ArrowUpRight className="size-4" />
                           ) : (
@@ -253,8 +271,12 @@ export default function UserPortfolioPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={3} className="py-12 text-center text-xs text-muted-foreground">
-                    No holdings in your portfolio yet. Click "Buy Assets" to invest!
+                  <TableCell
+                    colSpan={3}
+                    className="py-12 text-center text-xs text-muted-foreground"
+                  >
+                    No holdings in your portfolio yet. Click "Buy Assets" to
+                    invest!
                   </TableCell>
                 </TableRow>
               )}

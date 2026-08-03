@@ -5,21 +5,19 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Check,
+  ChevronLeft,
+  ChevronRight,
   Coins,
   DollarSign,
   Globe,
   Loader2,
-  RefreshCw,
   Search,
-  ShieldCheck,
-  TrendingUp,
   ShoppingBag,
-  Building2,
-  Flame,
+  TrendingUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,7 +36,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { formatFullCurrency } from "@/components/formatter";
 import Link from "next/link";
 
 interface MarketAsset {
@@ -54,6 +51,64 @@ interface MarketAsset {
   volume24h?: number;
   marketCap?: number;
   sparkline?: number[];
+}
+
+function SparklineGraph({ data, isPositive }: { data?: number[]; isPositive: boolean }) {
+  if (!data || data.length === 0) {
+    const points = isPositive
+      ? [12, 14, 11, 18, 16, 22, 28]
+      : [28, 24, 26, 18, 14, 16, 10];
+    const min = Math.min(...points);
+    const max = Math.max(...points);
+    const range = max - min || 1;
+    const svgPoints = points
+      .map((val, idx) => {
+        const x = (idx / (points.length - 1)) * 120;
+        const y = 35 - ((val - min) / range) * 28;
+        return `${x.toFixed(1)},${y.toFixed(1)}`;
+      })
+      .join(" ");
+
+    return (
+      <svg width="120" height="38" className="overflow-visible">
+        <polyline
+          fill="none"
+          stroke={isPositive ? "#22c55e" : "#ef4444"}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          points={svgPoints}
+        />
+      </svg>
+    );
+  }
+
+  const step = Math.max(1, Math.floor(data.length / 30));
+  const sampled = data.filter((_, idx) => idx % step === 0);
+  const min = Math.min(...sampled);
+  const max = Math.max(...sampled);
+  const range = max - min || 1;
+
+  const pointsString = sampled
+    .map((val, idx) => {
+      const x = (idx / (sampled.length - 1)) * 120;
+      const y = 35 - ((val - min) / range) * 28;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <svg width="120" height="38" className="overflow-visible">
+      <polyline
+        fill="none"
+        stroke={isPositive ? "#22c55e" : "#ef4444"}
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        points={pointsString}
+      />
+    </svg>
+  );
 }
 
 const STOCK_ASSETS: MarketAsset[] = [
@@ -82,23 +137,26 @@ const FALLBACK_CRYPTO: MarketAsset[] = [
   { id: "ripple", symbol: "XRP", name: "XRP", category: "crypto", price: 0.58, change24h: 8.90, marketCap: 32000000000 },
 ];
 
+const ITEMS_PER_PAGE = 10;
+
 export default function StocksMarketsPage() {
   const [cryptoAssets, setCryptoAssets] = useState<MarketAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState<"all" | "crypto" | "stock" | "commodity">("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [buyingAsset, setBuyingAsset] = useState<MarketAsset | null>(null);
-  const [purchaseAmountUsd, setPurchaseAmountUsd] = useState("100");
+  const [purchaseAmountUsd, setPurchaseAmountUsd] = useState("10");
   const [purchasing, setPurchasing] = useState(false);
   const [userBalance, setUserBalance] = useState<number | null>(null);
 
-  // Fetch Crypto from CoinGecko
+  // Fetch direct from CoinGecko with sparkline=true
   const fetchMarketData = useCallback(async () => {
     try {
       setLoading(true);
       const [cgRes, portfolioRes] = await Promise.allSettled([
         fetch(
-          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=20&page=1&sparkline=true"
+          "https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=true"
         ),
         fetch("/api/user/portfolio"),
       ]);
@@ -129,7 +187,7 @@ export default function StocksMarketsPage() {
         setCryptoAssets(FALLBACK_CRYPTO);
       }
     } catch (err) {
-      console.error("Failed to fetch market data:", err);
+      console.error("Failed to fetch CoinGecko market data:", err);
       setCryptoAssets(FALLBACK_CRYPTO);
     } finally {
       setLoading(false);
@@ -140,7 +198,7 @@ export default function StocksMarketsPage() {
     fetchMarketData();
   }, [fetchMarketData]);
 
-  // Combine all market assets
+  // Combine market assets
   const allAssets = [...cryptoAssets, ...STOCK_ASSETS, ...COMMODITY_ASSETS];
 
   const filteredAssets = allAssets.filter((asset) => {
@@ -151,6 +209,19 @@ export default function StocksMarketsPage() {
     return matchesCategory && matchesSearch;
   });
 
+  // Pagination calculation
+  const totalPages = Math.max(1, Math.ceil(filteredAssets.length / ITEMS_PER_PAGE));
+  const paginatedAssets = filteredAssets.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage >= 1 && newPage <= totalPages) {
+      setCurrentPage(newPage);
+    }
+  };
+
   const handleBuyAsset = async () => {
     if (!buyingAsset) return;
 
@@ -160,6 +231,7 @@ export default function StocksMarketsPage() {
       return;
     }
 
+    // Exact $10 asset value calculation without reduction
     const quantity = usdVal / buyingAsset.price;
 
     setPurchasing(true);
@@ -182,7 +254,7 @@ export default function StocksMarketsPage() {
       }
 
       toast.success(
-        `Successfully bought ${quantity.toFixed(4)} ${buyingAsset.symbol} for $${usdVal.toFixed(2)} USD!`
+        `Successfully purchased $${usdVal.toFixed(2)} worth of ${buyingAsset.name}!`
       );
       setBuyingAsset(null);
 
@@ -205,41 +277,28 @@ export default function StocksMarketsPage() {
               Market Intelligence
             </span>
             <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-600 border-emerald-500/30 font-mono">
-              Live CoinGecko & Equities
+              CoinGecko API & Equities
             </Badge>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight mt-1">
-            Global Markets & Stocks
+            Global Stocks & Markets
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-2xl">
-            Real-time cryptocurrency quotes, blue-chip stocks, and spot commodities. Instant 1-click execution into your live portfolio.
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-[640px]">
+            Live cryptocurrency quotes direct from CoinGecko, blue-chip equities, and spot commodities with instant 1-click execution.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button
-            render={
-              <Link href="/dashboard/portfolio">
-                <ShoppingBag className="size-3.5" />
-                View Portfolio
-              </Link>
-            }
-            variant="outline"
-            size="sm"
-            className="h-9 text-xs gap-1.5 cursor-pointer shrink-0"
-          />
-
-          <Button
-            onClick={fetchMarketData}
-            disabled={loading}
-            variant="outline"
-            size="sm"
-            className="h-9 text-xs gap-1.5 cursor-pointer shrink-0"
-          >
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
-        </div>
+        <Button
+          render={
+            <Link href="/dashboard/portfolio">
+              <ShoppingBag className="size-3.5" />
+              View Portfolio
+            </Link>
+          }
+          variant="outline"
+          size="sm"
+          className="h-9 text-xs gap-1.5 cursor-pointer shrink-0"
+        />
       </div>
 
       {/* Category Tabs & Search Bar */}
@@ -253,7 +312,10 @@ export default function StocksMarketsPage() {
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setCategory(tab.id as any)}
+              onClick={() => {
+                setCategory(tab.id as any);
+                setCurrentPage(1);
+              }}
               className={`px-3.5 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
                 category === tab.id
                   ? "bg-accent-foreground text-background shadow-xs font-bold"
@@ -271,7 +333,10 @@ export default function StocksMarketsPage() {
             type="text"
             placeholder="Search Bitcoin, Apple, Gold..."
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setCurrentPage(1);
+            }}
             className="pl-9 h-9 text-xs bg-card border-border text-foreground w-full"
           />
         </div>
@@ -284,20 +349,21 @@ export default function StocksMarketsPage() {
             Market Quotes & Execution
           </CardTitle>
           <span className="text-xs text-muted-foreground font-mono">
-            {filteredAssets.length} asset{filteredAssets.length === 1 ? "" : "s"} listed
+            Showing {paginatedAssets.length} of {filteredAssets.length} assets
           </span>
         </CardHeader>
 
         <CardContent className="p-0 overflow-x-auto w-full max-w-full">
-          <Table className="w-full min-w-[780px] whitespace-nowrap">
+          <Table className="w-full min-w-[850px] whitespace-nowrap">
             <TableHeader>
               <TableRow className="border-border bg-muted/30">
                 <TableHead className="text-xs font-bold text-muted-foreground py-3">Asset</TableHead>
                 <TableHead className="text-xs font-bold text-muted-foreground py-3">Category</TableHead>
                 <TableHead className="text-xs font-bold text-muted-foreground py-3">Market Price (USD)</TableHead>
                 <TableHead className="text-xs font-bold text-muted-foreground py-3">24h Change</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3">7d Price%</TableHead>
                 <TableHead className="text-xs font-bold text-muted-foreground py-3">Market Cap / Vol</TableHead>
-                <TableHead className="text-xs font-bold text-muted-foreground py-3 text-right">Quick Buy Action</TableHead>
+                <TableHead className="text-xs font-bold text-muted-foreground py-3 text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -309,12 +375,13 @@ export default function StocksMarketsPage() {
                     <TableCell><Skeleton className="h-5 w-16" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-24" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-28" /></TableCell>
                     <TableCell><Skeleton className="h-5 w-28" /></TableCell>
-                    <TableCell><Skeleton className="h-8 w-28 ml-auto" /></TableCell>
+                    <TableCell><Skeleton className="h-8 w-20 ml-auto" /></TableCell>
                   </TableRow>
                 ))
-              ) : filteredAssets.length > 0 ? (
-                filteredAssets.map((asset) => {
+              ) : paginatedAssets.length > 0 ? (
+                paginatedAssets.map((asset) => {
                   const isPositive = asset.change24h >= 0;
 
                   return (
@@ -387,6 +454,11 @@ export default function StocksMarketsPage() {
                         </div>
                       </TableCell>
 
+                      {/* 7d Price% Sparkline Graph */}
+                      <TableCell className="py-2">
+                        <SparklineGraph data={asset.sparkline} isPositive={isPositive} />
+                      </TableCell>
+
                       {/* Market Cap / Vol */}
                       <TableCell className="py-3 font-mono text-[11px] text-muted-foreground">
                         {asset.marketCap
@@ -401,10 +473,10 @@ export default function StocksMarketsPage() {
                         <Button
                           size="sm"
                           onClick={() => setBuyingAsset(asset)}
-                          className="h-8 px-3 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs gap-1.5"
+                          className="h-8 px-4 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs gap-1.5"
                         >
                           <ShoppingBag className="size-3.5" />
-                          Buy {asset.name}
+                          Buy
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -412,7 +484,7 @@ export default function StocksMarketsPage() {
                 })
               ) : (
                 <TableRow>
-                  <TableCell colSpan={6} className="py-12 text-center text-xs text-muted-foreground">
+                  <TableCell colSpan={7} className="py-12 text-center text-xs text-muted-foreground">
                     No market assets matching search criteria.
                   </TableCell>
                 </TableRow>
@@ -420,12 +492,59 @@ export default function StocksMarketsPage() {
             </TableBody>
           </Table>
         </CardContent>
+
+        {/* Pagination Bar */}
+        {totalPages > 1 && (
+          <div className="border-t border-border py-3 px-4 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground font-medium">
+              Page {currentPage} of {totalPages}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage - 1)}
+                disabled={currentPage === 1}
+                className="h-8 text-xs gap-1 cursor-pointer disabled:opacity-50"
+              >
+                <ChevronLeft className="size-3.5" /> Previous
+              </Button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.min(5, totalPages) }).map((_, idx) => {
+                  const pNum = idx + 1;
+                  return (
+                    <button
+                      key={pNum}
+                      onClick={() => handlePageChange(pNum)}
+                      className={`size-7 text-xs font-bold rounded-lg border transition-colors cursor-pointer ${
+                        currentPage === pNum
+                          ? "bg-accent-foreground text-background border-accent-foreground"
+                          : "bg-card border-border text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {pNum}
+                    </button>
+                  );
+                })}
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handlePageChange(currentPage + 1)}
+                disabled={currentPage === totalPages}
+                className="h-8 text-xs gap-1 cursor-pointer disabled:opacity-50"
+              >
+                Next <ChevronRight className="size-3.5" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Asset Purchase Dialog */}
       {buyingAsset && (
         <Dialog open={Boolean(buyingAsset)} onOpenChange={(o) => !o && setBuyingAsset(null)}>
-          <DialogContent className="max-w-md bg-card border-border">
+          <DialogContent className="max-w-[440px] bg-card border-border">
             <DialogHeader>
               <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <ShoppingBag className="size-4 text-emerald-500" />
@@ -459,7 +578,7 @@ export default function StocksMarketsPage() {
                   <Input
                     type="number"
                     min="1"
-                    step="10"
+                    step="5"
                     value={purchaseAmountUsd}
                     onChange={(e) => setPurchaseAmountUsd(e.target.value)}
                     className="pl-7 h-10 text-sm font-mono bg-background font-bold text-foreground"
@@ -475,16 +594,16 @@ export default function StocksMarketsPage() {
                   <span>${buyingAsset.price.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                 </div>
                 <div className="flex justify-between font-bold text-foreground text-sm pt-1 border-t border-border/50">
-                  <span>Estimated Tokens/Shares:</span>
+                  <span>Exact Purchased Asset Value:</span>
                   <span className="text-emerald-500">
-                    {((parseFloat(purchaseAmountUsd) || 0) / buyingAsset.price).toFixed(6)} {buyingAsset.symbol}
+                    ${(parseFloat(purchaseAmountUsd) || 0).toFixed(2)} USD
                   </span>
                 </div>
               </div>
 
               {/* Quick Amount Selector Chips */}
               <div className="flex gap-2">
-                {["50", "100", "250", "500", "1000"].map((amt) => (
+                {["10", "50", "100", "250", "500"].map((amt) => (
                   <button
                     key={amt}
                     type="button"

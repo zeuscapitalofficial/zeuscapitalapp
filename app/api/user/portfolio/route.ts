@@ -157,10 +157,11 @@ export async function POST(request: Request) {
       }
 
       // 3. Log transaction
+      const txCategoryType = category ? category.toUpperCase() : "STOCK";
       await tx.transaction.create({
         data: {
           userId,
-          type: "PURCHASE",
+          type: txCategoryType,
           asset: `${name} (${symbol.toUpperCase()})`,
           amount: totalCost,
           status: "COMPLETED",

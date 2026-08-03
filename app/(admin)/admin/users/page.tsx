@@ -1,55 +1,16 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import { format } from "date-fns";
-import {
-  Users,
-  Search,
-  RefreshCw,
-  MoreHorizontal,
-  Bell,
-  Send,
-  ShieldCheck,
-  UserCheck,
-  UserX,
-  MessageSquare,
-  DollarSign,
-  AlertTriangle,
-  Eye,
-  Edit3,
-  TrendingUp,
-  Gift,
-  Share2,
-  Calendar,
-  ShoppingBag,
-} from "lucide-react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Textarea } from "@/components/ui/textarea";
-import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -59,13 +20,56 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Separator } from "@/components/ui/separator";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { format } from "date-fns";
+import {
+  AlertTriangle,
+  Bell,
+  DollarSign,
+  Edit3,
+  Eye,
+  Gift,
+  MessageSquare,
+  MoreHorizontal,
+  RefreshCw,
+  Search,
+  Send,
+  ShieldCheck,
+  ShoppingBag,
+  TrendingUp,
+  UserCheck,
+  Users,
+  UserX,
+} from "lucide-react";
+import Link from "next/link";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 interface UserProfile {
   id: string;
@@ -111,17 +115,24 @@ export default function AdminUsersPage() {
   const [isUpdatingRole, setIsUpdatingRole] = useState(false);
 
   // Notification Alert Modal State
-  const [alertTarget, setAlertTarget] = useState<{ id: string; name: string } | null>(null);
+  const [alertTarget, setAlertTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
   const [alertTitle, setAlertTitle] = useState("");
   const [alertMessage, setAlertMessage] = useState("");
   const [alertType, setAlertType] = useState("INFO");
   const [isDispatchingAlert, setIsDispatchingAlert] = useState(false);
 
   // Portfolio Override Modal State
-  const [portfolioTarget, setPortfolioTarget] = useState<UserProfile | null>(null);
+  const [portfolioTarget, setPortfolioTarget] = useState<UserProfile | null>(
+    null,
+  );
   const [userPortfolioItems, setUserPortfolioItems] = useState<any[]>([]);
   const [isLoadingPortfolio, setIsLoadingPortfolio] = useState(false);
-  const [editingPortfolioItem, setEditingPortfolioItem] = useState<any | null>(null);
+  const [editingPortfolioItem, setEditingPortfolioItem] = useState<any | null>(
+    null,
+  );
   const [editPortfolioQty, setEditPortfolioQty] = useState("");
   const [editPortfolioPrice, setEditPortfolioPrice] = useState("");
   const [isSavingPortfolio, setIsSavingPortfolio] = useState(false);
@@ -251,12 +262,18 @@ export default function AdminUsersPage() {
     const total = users.length;
     const admins = users.filter((u) => u.role === "ADMIN").length;
     const verified = users.filter((u) => u.emailVerified).length;
-    const totalDeposits = users.reduce((acc, u) => acc + (u.totalDeposit || 0), 0);
+    const totalDeposits = users.reduce(
+      (acc, u) => acc + (u.totalDeposit || 0),
+      0,
+    );
     return { total, admins, verified, totalDeposits };
   }, [users]);
 
   // Execute Role Promotion / Demotion
-  const executeRoleChange = async (userId: string, newRole: "ADMIN" | "USER") => {
+  const executeRoleChange = async (
+    userId: string,
+    newRole: "ADMIN" | "USER",
+  ) => {
     setIsUpdatingRole(true);
     const toastId = toast.loading(`Updating privileges...`);
     try {
@@ -270,11 +287,11 @@ export default function AdminUsersPage() {
       if (!res.ok) throw new Error(data.error || "Failed to update role");
 
       setUsers((prev) =>
-        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+        prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u)),
       );
       toast.success(
         `User profile successfully ${newRole === "ADMIN" ? "promoted to Admin" : "demoted to User"}!`,
-        { id: toastId }
+        { id: toastId },
       );
 
       setPromoteTarget(null);
@@ -330,14 +347,18 @@ export default function AdminUsersPage() {
                 bonusRewards: parseFloat(editBonus) || 0,
                 totalDeposit: parseFloat(editDeposit) || 0,
               }
-            : u
-        )
+            : u,
+        ),
       );
 
-      toast.success("User financial balances updated successfully!", { id: toastId });
+      toast.success("User financial balances updated successfully!", {
+        id: toastId,
+      });
       setEditUser(null);
     } catch (e: any) {
-      toast.error(e.message || "Failed to save financial parameters.", { id: toastId });
+      toast.error(e.message || "Failed to save financial parameters.", {
+        id: toastId,
+      });
     } finally {
       setIsSavingFinancials(false);
     }
@@ -388,7 +409,8 @@ export default function AdminUsersPage() {
             User Accounts & Control
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Full user directory, financial adjustments, access role management, and direct notifications.
+            Full user directory, financial adjustments, access role management,
+            and direct notifications.
           </p>
         </div>
 
@@ -400,7 +422,9 @@ export default function AdminUsersPage() {
             disabled={loading}
             className="gap-2 text-xs h-9 cursor-pointer"
           >
-            <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`size-3.5 ${loading ? "animate-spin" : ""}`}
+            />
             Sync Database
           </Button>
 
@@ -510,7 +534,8 @@ export default function AdminUsersPage() {
                 User Directory
               </CardTitle>
               <CardDescription className="text-xs">
-                Showing {filteredUsers.length} of {users.length} registered accounts.
+                Showing {filteredUsers.length} of {users.length} registered
+                accounts.
               </CardDescription>
             </div>
 
@@ -527,7 +552,10 @@ export default function AdminUsersPage() {
                 />
               </div>
 
-              <Select value={roleFilter} onValueChange={(val) => val && setRoleFilter(val)}>
+              <Select
+                value={roleFilter}
+                onValueChange={(val) => val && setRoleFilter(val)}
+              >
                 <SelectTrigger className="h-8 text-xs w-28 bg-background">
                   <SelectValue placeholder="Role" />
                 </SelectTrigger>
@@ -538,7 +566,10 @@ export default function AdminUsersPage() {
                 </SelectContent>
               </Select>
 
-              <Select value={kycFilter} onValueChange={(val) => val && setKycFilter(val)}>
+              <Select
+                value={kycFilter}
+                onValueChange={(val) => val && setKycFilter(val)}
+              >
                 <SelectTrigger className="h-8 text-xs w-32 bg-background">
                   <SelectValue placeholder="KYC Status" />
                 </SelectTrigger>
@@ -571,7 +602,10 @@ export default function AdminUsersPage() {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-10 text-xs text-muted-foreground">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-10 text-xs text-muted-foreground"
+                  >
                     <div className="flex items-center justify-center gap-2">
                       <div className="size-4 rounded-full border-2 border-accent-foreground/30 border-t-accent-foreground animate-spin" />
                       Loading user records...
@@ -580,7 +614,10 @@ export default function AdminUsersPage() {
                 </TableRow>
               ) : filteredUsers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-10 text-xs text-muted-foreground">
+                  <TableCell
+                    colSpan={8}
+                    className="text-center py-10 text-xs text-muted-foreground"
+                  >
                     No matching users found for your search criteria.
                   </TableCell>
                 </TableRow>
@@ -629,10 +666,10 @@ export default function AdminUsersPage() {
                           user.kyc?.status === "APPROVED"
                             ? "bg-emerald-500/15 text-emerald-600 border-emerald-500/30"
                             : user.kyc?.status === "PENDING"
-                            ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
-                            : user.kyc?.status === "REJECTED"
-                            ? "bg-rose-500/15 text-rose-600 border-rose-500/30"
-                            : "bg-muted text-muted-foreground"
+                              ? "bg-amber-500/15 text-amber-600 border-amber-500/30"
+                              : user.kyc?.status === "REJECTED"
+                                ? "bg-rose-500/15 text-rose-600 border-rose-500/30"
+                                : "bg-muted text-muted-foreground"
                         }`}
                       >
                         {user.kyc?.status ?? "NONE"}
@@ -640,11 +677,17 @@ export default function AdminUsersPage() {
                     </TableCell>
 
                     <TableCell className="text-xs font-medium text-foreground">
-                      ${user.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      $
+                      {user.balance.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </TableCell>
 
                     <TableCell className="text-xs font-medium text-foreground">
-                      ${user.totalDeposit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                      $
+                      {user.totalDeposit.toLocaleString(undefined, {
+                        minimumFractionDigits: 2,
+                      })}
                     </TableCell>
 
                     <TableCell className="text-xs text-muted-foreground">
@@ -657,16 +700,18 @@ export default function AdminUsersPage() {
 
                     <TableCell className="text-right">
                       <DropdownMenu>
-                        <DropdownMenuTrigger render={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
-                          >
-                            <MoreHorizontal className="size-4" />
-                            <span className="sr-only">Actions</span>
-                          </Button>
-                        } />
+                        <DropdownMenuTrigger
+                          render={
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="size-7 text-muted-foreground hover:text-foreground cursor-pointer"
+                            >
+                              <MoreHorizontal className="size-4" />
+                              <span className="sr-only">Actions</span>
+                            </Button>
+                          }
+                        />
                         <DropdownMenuContent align="end" className="w-52">
                           <DropdownMenuGroup>
                             <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
@@ -707,12 +752,15 @@ export default function AdminUsersPage() {
                               Send Notification
                             </DropdownMenuItem>
 
-                            <DropdownMenuItem className="text-xs gap-2 cursor-pointer" render={
-                              <Link href="/admin/chat">
-                                <MessageSquare className="size-3.5 text-sky-500" />
-                                View Support Chat
-                              </Link>}>
-                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-xs gap-2 cursor-pointer"
+                              render={
+                                <Link href="/admin/chat">
+                                  <MessageSquare className="size-3.5 text-sky-500" />
+                                  View Support Chat
+                                </Link>
+                              }
+                            ></DropdownMenuItem>
 
                             <DropdownMenuSeparator />
 
@@ -749,7 +797,10 @@ export default function AdminUsersPage() {
       </Card>
 
       {/* ── 1. FULL USER PROFILE INSPECTION DIALOG ── */}
-      <Dialog open={Boolean(inspectUser)} onOpenChange={(open) => !open && setInspectUser(null)}>
+      <Dialog
+        open={Boolean(inspectUser)}
+        onOpenChange={(open) => !open && setInspectUser(null)}
+      >
         <DialogContent className="sm:max-w-120">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
@@ -771,7 +822,9 @@ export default function AdminUsersPage() {
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-foreground">{inspectUser.name}</h3>
+                    <h3 className="text-sm font-bold text-foreground">
+                      {inspectUser.name}
+                    </h3>
                     <Badge
                       variant="outline"
                       className={`text-[10px] ${
@@ -783,35 +836,49 @@ export default function AdminUsersPage() {
                       {inspectUser.role}
                     </Badge>
                   </div>
-                  <p className="text-xs text-muted-foreground">{inspectUser.email}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {inspectUser.email}
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div className="p-3 rounded-lg border border-border bg-card">
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1 mb-1">
-                    <DollarSign className="size-3 text-emerald-500" /> Available Balance
+                    <DollarSign className="size-3 text-emerald-500" /> Available
+                    Balance
                   </span>
                   <p className="text-base font-bold text-foreground">
-                    ${inspectUser.balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {inspectUser.balance.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg border border-border bg-card">
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1 mb-1">
-                    <DollarSign className="size-3 text-blue-500" /> Total Deposited
+                    <DollarSign className="size-3 text-blue-500" /> Total
+                    Deposited
                   </span>
                   <p className="text-base font-bold text-foreground">
-                    ${inspectUser.totalDeposit.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {inspectUser.totalDeposit.toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
 
                 <div className="p-3 rounded-lg border border-border bg-card">
                   <span className="text-[11px] text-muted-foreground flex items-center gap-1 mb-1">
-                    <TrendingUp className="size-3 text-purple-500" /> Total Profit
+                    <TrendingUp className="size-3 text-purple-500" /> Total
+                    Profit
                   </span>
                   <p className="text-sm font-semibold text-foreground">
-                    ${(inspectUser.totalProfit ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {(inspectUser.totalProfit ?? 0).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
 
@@ -820,7 +887,10 @@ export default function AdminUsersPage() {
                     <Gift className="size-3 text-amber-500" /> Bonus Rewards
                   </span>
                   <p className="text-sm font-semibold text-foreground">
-                    ${(inspectUser.bonusRewards ?? 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    $
+                    {(inspectUser.bonusRewards ?? 0).toLocaleString(undefined, {
+                      minimumFractionDigits: 2,
+                    })}
                   </p>
                 </div>
               </div>
@@ -830,11 +900,20 @@ export default function AdminUsersPage() {
               <div className="space-y-2">
                 <div className="flex justify-between items-center py-1">
                   <span className="text-muted-foreground">Account ID:</span>
-                  <span className="font-mono text-foreground select-all">{inspectUser.id}</span>
+                  <span className="font-mono text-foreground select-all">
+                    {inspectUser.id}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center py-1">
                   <span className="text-muted-foreground">Email Status:</span>
-                  <Badge variant="outline" className={inspectUser.emailVerified ? "text-emerald-600 bg-emerald-500/10 border-emerald-500/30" : "text-muted-foreground"}>
+                  <Badge
+                    variant="outline"
+                    className={
+                      inspectUser.emailVerified
+                        ? "text-emerald-600 bg-emerald-500/10 border-emerald-500/30"
+                        : "text-muted-foreground"
+                    }
+                  >
                     {inspectUser.emailVerified ? "Verified" : "Unverified"}
                   </Badge>
                 </div>
@@ -845,15 +924,24 @@ export default function AdminUsersPage() {
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center py-1">
-                  <span className="text-muted-foreground">Registration Date:</span>
-                  <span className="text-foreground">{format(new Date(inspectUser.createdAt), "PPP")}</span>
+                  <span className="text-muted-foreground">
+                    Registration Date:
+                  </span>
+                  <span className="text-foreground">
+                    {format(new Date(inspectUser.createdAt), "PPP")}
+                  </span>
                 </div>
               </div>
             </div>
           )}
 
           <DialogFooter className="gap-2 sm:gap-1">
-            <Button variant="outline" size="sm" onClick={() => setInspectUser(null)} className="text-xs h-9">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setInspectUser(null)}
+              className="text-xs h-9"
+            >
               Close
             </Button>
             <Button
@@ -872,7 +960,10 @@ export default function AdminUsersPage() {
       </Dialog>
 
       {/* ── 2. EDIT FINANCIAL BALANCES DIALOG ── */}
-      <Dialog open={Boolean(editUser)} onOpenChange={(open) => !open && setEditUser(null)}>
+      <Dialog
+        open={Boolean(editUser)}
+        onOpenChange={(open) => !open && setEditUser(null)}
+      >
         <DialogContent className="sm:max-w-120">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
@@ -880,12 +971,16 @@ export default function AdminUsersPage() {
               Adjust User Financials
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Modify account balances for <strong className="text-foreground">{editUser?.name}</strong>.
+              Modify account balances for{" "}
+              <strong className="text-foreground">{editUser?.name}</strong>.
             </DialogDescription>
           </DialogHeader>
 
           {editUser && (
-            <form onSubmit={handleSaveFinancials} className="flex flex-col gap-4 py-2">
+            <form
+              onSubmit={handleSaveFinancials}
+              className="flex flex-col gap-4 py-2"
+            >
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor="balance" className="text-xs font-semibold">
@@ -902,7 +997,10 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="totalDeposit" className="text-xs font-semibold">
+                  <Label
+                    htmlFor="totalDeposit"
+                    className="text-xs font-semibold"
+                  >
                     Total Deposited ($)
                   </Label>
                   <Input
@@ -916,7 +1014,10 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="totalProfit" className="text-xs font-semibold">
+                  <Label
+                    htmlFor="totalProfit"
+                    className="text-xs font-semibold"
+                  >
                     Total Profit ($)
                   </Label>
                   <Input
@@ -930,7 +1031,10 @@ export default function AdminUsersPage() {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <Label htmlFor="bonusRewards" className="text-xs font-semibold">
+                  <Label
+                    htmlFor="bonusRewards"
+                    className="text-xs font-semibold"
+                  >
                     Bonus Rewards ($)
                   </Label>
                   <Input
@@ -985,17 +1089,28 @@ export default function AdminUsersPage() {
               Confirm Administrative Promotion
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Promoting a user grants full administrative control over all platform records, user accounts, and financials.
+              Promoting a user grants full administrative control over all
+              platform records, user accounts, and financials.
             </DialogDescription>
           </DialogHeader>
 
           {promoteTarget && (
             <div className="flex flex-col gap-4 py-2">
-              <Alert variant="destructive" className="bg-amber-500/10 border-amber-500/30 text-amber-600 text-xs">
+              <Alert
+                variant="destructive"
+                className="bg-amber-500/10 border-amber-500/30 text-amber-600 text-xs"
+              >
                 <AlertTriangle className="size-4 text-amber-500" />
-                <AlertTitle className="text-xs font-bold text-amber-600">Security Safeguard</AlertTitle>
+                <AlertTitle className="text-xs font-bold text-amber-600">
+                  Security Safeguard
+                </AlertTitle>
                 <AlertDescription className="text-[11px] text-amber-600/90 mt-0.5">
-                  To prevent accidental promotions, please type the user's full name <strong className="font-bold underline">{promoteTarget.name}</strong> to verify.
+                  To prevent accidental promotions, please type the user's full
+                  name{" "}
+                  <strong className="font-bold underline">
+                    {promoteTarget.name}
+                  </strong>{" "}
+                  to verify.
                 </AlertDescription>
               </Alert>
 
@@ -1006,13 +1121,20 @@ export default function AdminUsersPage() {
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <h4 className="text-xs font-bold text-foreground">{promoteTarget.name}</h4>
-                  <p className="text-[11px] text-muted-foreground">{promoteTarget.email}</p>
+                  <h4 className="text-xs font-bold text-foreground">
+                    {promoteTarget.name}
+                  </h4>
+                  <p className="text-[11px] text-muted-foreground">
+                    {promoteTarget.email}
+                  </p>
                 </div>
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <Label htmlFor="confirm-name" className="text-xs font-semibold text-foreground">
+                <Label
+                  htmlFor="confirm-name"
+                  className="text-xs font-semibold text-foreground"
+                >
                   Type "{promoteTarget.name}" to confirm:
                 </Label>
                 <Input
@@ -1074,7 +1196,8 @@ export default function AdminUsersPage() {
               Confirm Administrative Demotion
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Are you sure you want to revoke administrative access for <strong className="text-foreground">{demoteTarget?.name}</strong>?
+              Are you sure you want to revoke administrative access for{" "}
+              <strong className="text-foreground">{demoteTarget?.name}</strong>?
             </DialogDescription>
           </DialogHeader>
 
@@ -1123,13 +1246,17 @@ export default function AdminUsersPage() {
               Dispatch Notification Alert
             </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
-              Target Recipient: <strong className="text-foreground">{alertTarget?.name}</strong>
+              Target Recipient:{" "}
+              <strong className="text-foreground">{alertTarget?.name}</strong>
             </DialogDescription>
           </DialogHeader>
 
           <form onSubmit={handleSendAlert} className="flex flex-col gap-4 py-2">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="alert-type" className="text-xs font-semibold text-foreground">
+              <Label
+                htmlFor="alert-type"
+                className="text-xs font-semibold text-foreground"
+              >
                 Notification Type
               </Label>
               <Select
@@ -1141,15 +1268,24 @@ export default function AdminUsersPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="INFO">INFO (Standard update)</SelectItem>
-                  <SelectItem value="SECURITY">SECURITY (Access alert)</SelectItem>
-                  <SelectItem value="DEPOSIT">DEPOSIT (Financial update)</SelectItem>
-                  <SelectItem value="WARNING">WARNING (Compliance alert)</SelectItem>
+                  <SelectItem value="SECURITY">
+                    SECURITY (Access alert)
+                  </SelectItem>
+                  <SelectItem value="DEPOSIT">
+                    DEPOSIT (Financial update)
+                  </SelectItem>
+                  <SelectItem value="WARNING">
+                    WARNING (Compliance alert)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="alert-title" className="text-xs font-semibold text-foreground">
+              <Label
+                htmlFor="alert-title"
+                className="text-xs font-semibold text-foreground"
+              >
                 Title
               </Label>
               <Input
@@ -1164,7 +1300,10 @@ export default function AdminUsersPage() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="alert-message" className="text-xs font-semibold text-foreground">
+              <Label
+                htmlFor="alert-message"
+                className="text-xs font-semibold text-foreground"
+              >
                 Message Payload
               </Label>
               <Textarea
@@ -1210,14 +1349,15 @@ export default function AdminUsersPage() {
           if (!open) setPortfolioTarget(null);
         }}
       >
-        <DialogContent className="max-w-2xl bg-card border-border">
+        <DialogContent className="max-w-120 bg-card border-border">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <ShoppingBag className="size-5 text-purple-500" />
               Manage User Portfolio ({portfolioTarget?.name})
             </DialogTitle>
             <DialogDescription className="text-xs">
-              View, edit quantities, and overwrite current token/share values for user account {portfolioTarget?.email}.
+              View, edit quantities, and overwrite current token/share values
+              for user account {portfolioTarget?.email}.
             </DialogDescription>
           </DialogHeader>
 
@@ -1227,19 +1367,34 @@ export default function AdminUsersPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="border-border bg-muted/40">
-                    <TableHead className="text-[11px] font-bold py-2">Asset</TableHead>
-                    <TableHead className="text-[11px] font-bold py-2">Category</TableHead>
-                    <TableHead className="text-[11px] font-bold py-2">Quantity</TableHead>
-                    <TableHead className="text-[11px] font-bold py-2">Current Price</TableHead>
-                    <TableHead className="text-[11px] font-bold py-2">Total Value</TableHead>
-                    <TableHead className="text-[11px] font-bold py-2 text-right">Action</TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">
+                      Asset
+                    </TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">
+                      Category
+                    </TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">
+                      Quantity
+                    </TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">
+                      Current Price
+                    </TableHead>
+                    <TableHead className="text-[11px] font-bold py-2">
+                      Total Value
+                    </TableHead>
+                    <TableHead className="text-[11px] font-bold py-2 text-right">
+                      Action
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
 
                 <TableBody>
                   {isLoadingPortfolio ? (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-6 text-center text-xs text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="py-6 text-center text-xs text-muted-foreground"
+                      >
                         Loading user portfolio holdings...
                       </TableCell>
                     </TableRow>
@@ -1248,7 +1403,10 @@ export default function AdminUsersPage() {
                       const isEditing = editingPortfolioItem?.id === item.id;
 
                       return (
-                        <TableRow key={item.id} className="border-border text-xs">
+                        <TableRow
+                          key={item.id}
+                          className="border-border text-xs"
+                        >
                           <TableCell className="font-bold py-2">
                             {item.name} ({item.symbol})
                           </TableCell>
@@ -1260,7 +1418,9 @@ export default function AdminUsersPage() {
                               <Input
                                 type="number"
                                 value={editPortfolioQty}
-                                onChange={(e) => setEditPortfolioQty(e.target.value)}
+                                onChange={(e) =>
+                                  setEditPortfolioQty(e.target.value)
+                                }
                                 className="h-7 w-24 text-xs font-mono"
                               />
                             ) : (
@@ -1272,7 +1432,9 @@ export default function AdminUsersPage() {
                               <Input
                                 type="number"
                                 value={editPortfolioPrice}
-                                onChange={(e) => setEditPortfolioPrice(e.target.value)}
+                                onChange={(e) =>
+                                  setEditPortfolioPrice(e.target.value)
+                                }
                                 className="h-7 w-24 text-xs font-mono"
                               />
                             ) : (
@@ -1280,7 +1442,11 @@ export default function AdminUsersPage() {
                             )}
                           </TableCell>
                           <TableCell className="py-2 font-bold font-mono text-emerald-500">
-                            ${(item.quantity * item.currentPrice).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            $
+                            {(item.quantity * item.currentPrice).toLocaleString(
+                              undefined,
+                              { minimumFractionDigits: 2 },
+                            )}
                           </TableCell>
                           <TableCell className="py-2 text-right">
                             {isEditing ? (
@@ -1299,7 +1465,9 @@ export default function AdminUsersPage() {
                                 onClick={() => {
                                   setEditingPortfolioItem(item);
                                   setEditPortfolioQty(item.quantity.toString());
-                                  setEditPortfolioPrice(item.currentPrice.toString());
+                                  setEditPortfolioPrice(
+                                    item.currentPrice.toString(),
+                                  );
                                 }}
                                 className="h-7 px-2 text-[11px] font-semibold cursor-pointer"
                               >
@@ -1312,7 +1480,10 @@ export default function AdminUsersPage() {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="py-6 text-center text-xs text-muted-foreground">
+                      <TableCell
+                        colSpan={6}
+                        className="py-6 text-center text-xs text-muted-foreground"
+                      >
                         User owns no portfolio assets. Add an asset below!
                       </TableCell>
                     </TableRow>
@@ -1339,7 +1510,10 @@ export default function AdminUsersPage() {
                   onChange={(e) => setNewName(e.target.value)}
                   className="h-8 text-xs"
                 />
-                <Select value={newCategory} onValueChange={(v) => v && setNewCategory(v)}>
+                <Select
+                  value={newCategory}
+                  onValueChange={(v) => v && setNewCategory(v)}
+                >
                   <SelectTrigger className="h-8 text-xs">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
@@ -1370,7 +1544,9 @@ export default function AdminUsersPage() {
                 disabled={isSavingPortfolio}
                 className="w-full h-8 text-xs font-bold bg-purple-600 text-white hover:bg-purple-700 cursor-pointer"
               >
-                {isSavingPortfolio ? "Granting..." : "Add Asset to User Portfolio"}
+                {isSavingPortfolio
+                  ? "Granting..."
+                  : "Add Asset to User Portfolio"}
               </Button>
             </div>
           </div>

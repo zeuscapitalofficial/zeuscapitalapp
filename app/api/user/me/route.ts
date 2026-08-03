@@ -15,7 +15,7 @@ export async function GET() {
 
     const userId = session.user.id;
 
-    // Fetch user with KYC relation
+    // Fetch user with KYC relation & portfolio items
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: {
@@ -28,12 +28,27 @@ export async function GET() {
             nationality: true,
           },
         },
+        portfolioItems: {
+          select: {
+            quantity: true,
+            currentPrice: true,
+          },
+        },
       },
     });
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
+
+    // Sum portfolio asset values (including admin overrides)
+    const portfolioValue = user.portfolioItems.reduce(
+      (acc, item) => acc + item.quantity * item.currentPrice,
+      0
+    );
+
+    // Total profit includes base profit + current portfolio holding values
+    const effectiveTotalProfit = (user.totalProfit ?? 0) + portfolioValue;
 
     return NextResponse.json({
       id: user.id,
@@ -43,7 +58,7 @@ export async function GET() {
       role: user.role,
       image: user.image,
       balance: user.balance ?? 0,
-      totalProfit: user.totalProfit ?? 0,
+      totalProfit: effectiveTotalProfit,
       totalDeposit: user.totalDeposit ?? 0,
       bonusRewards: user.bonusRewards ?? 0,
       createdAt: user.createdAt,

@@ -150,11 +150,11 @@ export default function HistoryPage() {
 
         {/* Tab Filters */}
         <div className="flex p-0.5 rounded-md border border-input shadow-xs dark:bg-input/30 w-full sm:w-auto overflow-x-auto">
-          {["all", "deposit", "withdrawal"].map((tab) => (
+          {["all", "deposit", "withdrawal", "stock", "crypto", "commodity"].map((tab) => (
             <button
               key={tab}
               onClick={() => setFilter(tab)}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-md capitalize transition-all shrink-0 cursor-pointer ${
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md capitalize transition-all shrink-0 cursor-pointer ${
                 filter === tab
                   ? "bg-accent-foreground text-background shadow-xs"
                   : "text-muted-foreground hover:text-foreground"

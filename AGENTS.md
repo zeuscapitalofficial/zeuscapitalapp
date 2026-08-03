@@ -70,6 +70,8 @@ Always reuse the existing design language from shadcn/ui.
 
 Every page should feel like it belongs to the same application.
 
+stop using codes like w-2xl for width make it something like w-120 also for max width too
+
 ---
 
 ## Components

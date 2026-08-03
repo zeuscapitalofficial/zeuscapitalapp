@@ -119,14 +119,14 @@ export default function UserPortfolioPage() {
 
         <div className="flex items-center gap-2">
           <Button
-            asChild
+            render={
+              <Link href="/dashboard/stocks">
+                <ShoppingBag className="size-3.5" />
+                Buy More Assets
+              </Link>
+            }
             className="h-9 text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 cursor-pointer shadow-xs gap-1.5 shrink-0"
-          >
-            <Link href="/dashboard/stocks">
-              <ShoppingBag className="size-3.5" />
-              Buy More Assets
-            </Link>
-          </Button>
+          />
 
           <Button
             onClick={fetchPortfolio}

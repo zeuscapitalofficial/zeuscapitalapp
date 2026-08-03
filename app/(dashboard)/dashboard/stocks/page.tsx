@@ -131,7 +131,7 @@ export default function StocksMarketsPage() {
     } catch (err) {
       console.error("Failed to fetch market data:", err);
       setCryptoAssets(FALLBACK_CRYPTO);
-    } font-sans finally {
+    } finally {
       setLoading(false);
     }
   }, []);
@@ -218,16 +218,16 @@ export default function StocksMarketsPage() {
 
         <div className="flex items-center gap-2">
           <Button
-            asChild
+            render={
+              <Link href="/dashboard/portfolio">
+                <ShoppingBag className="size-3.5" />
+                View Portfolio
+              </Link>
+            }
             variant="outline"
             size="sm"
             className="h-9 text-xs gap-1.5 cursor-pointer shrink-0"
-          >
-            <Link href="/dashboard/portfolio">
-              <ShoppingBag className="size-3.5" />
-              View Portfolio
-            </Link>
-          </Button>
+          />
 
           <Button
             onClick={fetchMarketData}

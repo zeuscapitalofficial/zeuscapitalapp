@@ -143,7 +143,7 @@ export default function AdminUsersPage() {
       }
     } catch (err) {
       toast.error("Failed to load user portfolio");
-    } font-sans finally {
+    } finally {
       setIsLoadingPortfolio(false);
     }
   };

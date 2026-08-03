@@ -6,7 +6,7 @@ import { Server as SocketIOServer } from "socket.io";
 import prisma from "./lib/prisma.js";
 
 const dev = process.env.NODE_ENV !== "production";
-const hostname = process.env.HOST ?? process.env.HOSTNAME ?? (dev ? "localhost" : "0.0.0.0");
+const hostname = process.env.HOST ?? (dev ? "localhost" : "0.0.0.0");
 const port = Number(process.env.PORT ?? 3000);
 
 const app = next({ dev, hostname, port });

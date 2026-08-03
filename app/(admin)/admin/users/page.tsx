@@ -1350,7 +1350,7 @@ export default function AdminUsersPage() {
           if (!open) setPortfolioTarget(null);
         }}
       >
-        <DialogContent className="max-w-120 bg-card border-border">
+        <DialogContent className="sm:max-w-120">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <ShoppingBag className="size-5 text-purple-500" />

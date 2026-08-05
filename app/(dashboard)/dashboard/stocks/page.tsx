@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import CurrencyFormatter from "@/lib/currency-formatter";
 
 interface MarketAsset {
   id: string;
@@ -1158,10 +1159,7 @@ export default function StocksMarketsPage() {
 
                       {/* Price */}
                       <TableCell className="py-3 font-bold text-foreground text-sm font-mono">
-                        $
-                        {asset.price.toLocaleString(undefined, {
-                          minimumFractionDigits: asset.price < 1 ? 4 : 2,
-                        })}
+                        <CurrencyFormatter value={asset.price} />
                       </TableCell>
 
                       {/* 24h Change */}

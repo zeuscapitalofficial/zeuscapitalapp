@@ -213,7 +213,7 @@ export default function StocksMarketsPage() {
   const allAssets = [...cryptoAssets, ...STOCK_ASSETS, ...COMMODITY_ASSETS];
 
   const filteredAssets = allAssets.filter((asset) => {
-    const matchesCategory = category === "stock" || asset.category === category;
+    const matchesCategory = category === "all" || asset.category === category;
     const matchesSearch =
       asset.name.toLowerCase().includes(search.toLowerCase()) ||
       asset.symbol.toLowerCase().includes(search.toLowerCase());
@@ -294,7 +294,7 @@ export default function StocksMarketsPage() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight mt-1">
             Global Stocks & Markets
           </h1>
-          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-[640px]">
+          <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 max-w-160">
             Live cryptocurrency quotes direct from CoinGecko, blue-chip equities, and spot commodities with instant 1-click execution.
           </p>
         </div>
@@ -316,8 +316,8 @@ export default function StocksMarketsPage() {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div className="flex p-1 rounded-xl bg-muted border border-border overflow-x-auto max-w-full">
           {[
-            { id: "stock", label: "Equities & Stocks" },
             { id: "all", label: "All Markets" },
+            { id: "stock", label: "Equities & Stocks" },
             { id: "crypto", label: "Cryptocurrencies" },
             { id: "commodity", label: "Spot Commodities" },
           ].map((tab) => (

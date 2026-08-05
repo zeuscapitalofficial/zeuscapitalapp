@@ -112,7 +112,7 @@ function SparklineGraph({ data, isPositive }: { data?: number[]; isPositive: boo
 }
 
 const STOCK_ASSETS: MarketAsset[] = [
-  { id: "aapl", symbol: "AAPL", name: "Apple Inc.", category: "stock", price: 224.5, change24h: 1.85, marketCap: 3450000000000 },
+  { id: "aapl", symbol: "AAPL", name: "Apple Inc.", category: "stock", price: 224.5, change24h: 1.85, marketCap: 3450000000000, image: "https://img.logo.dev/apple.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
   { id: "tsla", symbol: "TSLA", name: "Tesla Inc.", category: "stock", price: 254.8, change24h: 4.2, marketCap: 810000000000 },
   { id: "nvda", symbol: "NVDA", name: "NVIDIA Corp.", category: "stock", price: 128.3, change24h: 3.45, marketCap: 3150000000000 },
   { id: "msft", symbol: "MSFT", name: "Microsoft Corp.", category: "stock", price: 448.9, change24h: 0.95, marketCap: 3330000000000 },
@@ -316,9 +316,9 @@ export default function StocksMarketsPage() {
       <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-3">
         <div className="flex p-1 rounded-xl bg-muted border border-border overflow-x-auto max-w-full">
           {[
-            { id: "all", label: "All Markets" },
-            { id: "crypto", label: "Cryptocurrencies (CoinGecko)" },
             { id: "stock", label: "Equities & Stocks" },
+            { id: "all", label: "All Markets" },
+            { id: "crypto", label: "Cryptocurrencies" },
             { id: "commodity", label: "Spot Commodities" },
           ].map((tab) => (
             <button
@@ -342,7 +342,7 @@ export default function StocksMarketsPage() {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
             type="text"
-            placeholder="Search Bitcoin, Apple, Gold..."
+            placeholder="Search..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -365,7 +365,7 @@ export default function StocksMarketsPage() {
         </CardHeader>
 
         <CardContent className="p-0 overflow-x-auto w-full max-w-full">
-          <Table className="w-full min-w-[850px] whitespace-nowrap">
+          <Table className="w-full min-w-212.5 whitespace-nowrap">
             <TableHeader>
               <TableRow className="border-border bg-muted/30">
                 <TableHead className="text-xs font-bold text-muted-foreground py-3">Asset</TableHead>

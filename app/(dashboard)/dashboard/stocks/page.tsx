@@ -1159,7 +1159,7 @@ export default function StocksMarketsPage() {
 
                       {/* Price */}
                       <TableCell className="py-3 font-bold text-foreground text-sm font-mono">
-                        <CurrencyFormatter value={asset.price} />
+                        <CurrencyFormatter value={asset.price}  />
                       </TableCell>
 
                       {/* 24h Change */}

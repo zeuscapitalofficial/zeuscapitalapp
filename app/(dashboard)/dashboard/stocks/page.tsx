@@ -113,23 +113,23 @@ function SparklineGraph({ data, isPositive }: { data?: number[]; isPositive: boo
 
 const STOCK_ASSETS: MarketAsset[] = [
   { id: "aapl", symbol: "AAPL", name: "Apple Inc.", category: "stock", price: 224.5, change24h: 1.85, marketCap: 3450000000000, image: "https://img.logo.dev/apple.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
-  { id: "tsla", symbol: "TSLA", name: "Tesla Inc.", category: "stock", price: 254.8, change24h: 4.2, marketCap: 810000000000 },
-  { id: "nvda", symbol: "NVDA", name: "NVIDIA Corp.", category: "stock", price: 128.3, change24h: 3.45, marketCap: 3150000000000 },
-  { id: "msft", symbol: "MSFT", name: "Microsoft Corp.", category: "stock", price: 448.9, change24h: 0.95, marketCap: 3330000000000 },
-  { id: "amzn", symbol: "AMZN", name: "Amazon.com Inc.", category: "stock", price: 186.2, change24h: 2.1, marketCap: 1940000000000 },
-  { id: "googl", symbol: "GOOGL", name: "Alphabet Inc.", category: "stock", price: 177.4, change24h: -0.45, marketCap: 2180000000000 },
-  { id: "meta", symbol: "META", name: "Meta Platforms", category: "stock", price: 485.6, change24h: 1.65, marketCap: 1230000000000 },
+  { id: "tsla", symbol: "TSLA", name: "Tesla Inc.", category: "stock", price: 254.8, change24h: 4.2, marketCap: 810000000000, image: "https://img.logo.dev/tesla.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "nvda", symbol: "NVDA", name: "NVIDIA Corp.", category: "stock", price: 128.3, change24h: 3.45, marketCap: 3150000000000, image: "https://img.logo.dev/nvidia.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "msft", symbol: "MSFT", name: "Microsoft Corp.", category: "stock", price: 448.9, change24h: 0.95, marketCap: 3330000000000, image: "https://img.logo.dev/microsoft.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "amzn", symbol: "AMZN", name: "Amazon.com Inc.", category: "stock", price: 186.2, change24h: 2.1, marketCap: 1940000000000, image: "https://img.logo.dev/amazon.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "googl", symbol: "GOOGL", name: "Google", category: "stock", price: 177.4, change24h: -0.45, marketCap: 2180000000000, image: "https://img.logo.dev/google.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "meta", symbol: "META", name: "Meta Platforms", category: "stock", price: 485.6, change24h: 1.65, marketCap: 1230000000000, image: "https://img.logo.dev/meta.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
 
   // Additional requested equities and AI/Private labels
-  { id: "mu", symbol: "MU", name: "Micron Technology", category: "stock", price: 88.5, change24h: 2.2, marketCap: 65000000000 },
-  { id: "avgo", symbol: "AVGO", name: "Broadcom Inc.", category: "stock", price: 960.0, change24h: -0.5, marketCap: 370000000000 },
-  { id: "arkk", symbol: "ARKK", name: "ARK Innovation ETF (Ark Invest)", category: "stock", price: 45.25, change24h: 0.8, marketCap: 20000000000 },
+  { id: "mu", symbol: "MU", name: "Micron Technology", category: "stock", price: 88.5, change24h: 2.2, marketCap: 65000000000, image: "https://img.logo.dev/micron.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "avgo", symbol: "AVGO", name: "Broadcom Inc.", category: "stock", price: 960.0, change24h: -0.5, marketCap: 370000000000, image: "https://img.logo.dev/broadcom.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "arkk", symbol: "ARKK", name: "ARK Innovation ETF (Ark Invest)", category: "stock", price: 45.25, change24h: 0.8, marketCap: 20000000000, image: "https://img.logo.dev/ark-invest.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
 
   // Non-public / private-label entries (display-only placeholders)
-  { id: "openai", symbol: "OPENAI", name: "OpenAI (private)", category: "stock", price: 30.0, change24h: 0.0, marketCap: undefined },
-  { id: "grok", symbol: "GROK", name: "Grok (xAI/AI model)", category: "stock", price: 8.0, change24h: 0.0, marketCap: undefined },
-  { id: "xai", symbol: "XAI", name: "xAI (private)", category: "stock", price: 12.5, change24h: 0.0, marketCap: undefined },
-  { id: "spacex", symbol: "SPACEX", name: "SpaceX (private)", category: "stock", price: 220.0, change24h: 0.0, marketCap: undefined },
+  { id: "openai", symbol: "OPENAI", name: "OpenAI (private)", category: "stock", price: 30.0, change24h: 0.0, marketCap: undefined, image: "https://img.logo.dev/openai.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "grok", symbol: "GROK", name: "Grok (xAI/AI model)", category: "stock", price: 8.0, change24h: 0.0, marketCap: undefined, image: "https://img.logo.dev/grok.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "xai", symbol: "XAI", name: "xAI (private)", category: "stock", price: 12.5, change24h: 0.0, marketCap: undefined, image: "https://img.logo.dev/x.ai?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
+  { id: "spacex", symbol: "SPACEX", name: "SpaceX (private)", category: "stock", price: 220.0, change24h: 0.0, marketCap: undefined, image: "https://img.logo.dev/spacex.com?token=live_6a1a28fd-6420-4492-aeb0-b297461d9de2&size=128&retina=true&format=png" },
 ];
 
 const COMMODITY_ASSETS: MarketAsset[] = [
@@ -213,7 +213,7 @@ export default function StocksMarketsPage() {
   const allAssets = [...cryptoAssets, ...STOCK_ASSETS, ...COMMODITY_ASSETS];
 
   const filteredAssets = allAssets.filter((asset) => {
-    const matchesCategory = category === "all" || asset.category === category;
+    const matchesCategory = category === "stock" || asset.category === category;
     const matchesSearch =
       asset.name.toLowerCase().includes(search.toLowerCase()) ||
       asset.symbol.toLowerCase().includes(search.toLowerCase());

@@ -1364,7 +1364,7 @@ export default function AdminUsersPage() {
 
           <div className="space-y-4 py-2 text-xs">
             {/* Holdings Table */}
-            <div className="border border-border rounded-lg overflow-x-auto max-h-60 overflow-y-auto">
+            <div className="border border-border rounded-lg overflow-x-auto max-h-60 max-w-100 overflow-y-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="border-border bg-muted/40">

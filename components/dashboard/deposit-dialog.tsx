@@ -45,7 +45,8 @@ export interface DepositDialogProps {
 const PAYMENT_METHODS = [
   { id: "btc", label: "Bitcoin", symbol: "BTC", type: "crypto" },
   { id: "usdt", label: "Tether (USDT)", symbol: "USDT", type: "crypto" },
-  { id: "usdc", label: "USD Coin (USDC)", symbol: "USDC", type: "crypto" },
+  { id: "eth", label: "Ethereum", symbol: "ETH", type: "crypto" },
+  { id: "sol", label: "Solana", symbol: "SOL", type: "crypto" },
   { id: "bank", label: "Bank Wire Transfer", symbol: "USD", type: "manual" },
   { id: "card", label: "Credit / Debit Card", symbol: "USD", type: "manual" },
 ];
@@ -67,15 +68,21 @@ const CRYPTO_CONFIG: Record<
   },
   usdt: {
     address: "TYDzsYUEpvnYmQk4zGP9sWWcTEd2MiAtW6",
-    network: "Tron (TRC-20) / Ethereum (ERC-20)",
+    network: "Binance Smart Chain",
     image: "/USDT.webp",
     priceUsd: 1.0,
   },
-  usdc: {
+  eth: {
     address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
-    network: "Ethereum (ERC-20) / Solana",
+    network: "Ethereum (ERC-20)",
     image: "/USDC.webp",
-    priceUsd: 1.0,
+    priceUsd: 2100.0,
+  },
+  sol: {
+    address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCN",
+    network: "Solana",
+    image: "/SOL.webp",
+    priceUsd: 95.0,
   },
 };
 
@@ -172,12 +179,12 @@ export function DepositDialog({
       setTxHash("");
       if (!isAmountDisabled) setUsdAmount("");
       onOpenChange?.(false);
-    }, 1800);
+    }, 800);
   };
 
   const handleOpenChat = () => {
     onOpenChange?.(false);
-    router.push("/dashboard?openChat=true");
+    router.push("/?openChat=true");
   };
 
   return (

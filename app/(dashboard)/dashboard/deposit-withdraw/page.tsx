@@ -1,17 +1,17 @@
 "use client";
 
-import { Suspense, useState, useEffect, useCallback } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  ShieldCheck,
   Coins,
-  ExternalLink,
   History,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,7 +20,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -120,7 +119,8 @@ function DepositWithdrawContent() {
   const availableBalance = user?.balance ?? 0;
   const totalDeposit = user?.totalDeposit ?? 0;
   const totalProfit = user?.totalProfit ?? 0;
-  const totalPortfolioValue = availableBalance + totalProfit + (user?.bonusRewards ?? 0);
+  const totalPortfolioValue =
+    availableBalance + totalProfit + (user?.bonusRewards ?? 0);
 
   const handleOpenChangeDeposit = (open: boolean) => {
     setIsDepositOpen(open);
@@ -149,7 +149,8 @@ function DepositWithdrawContent() {
             Deposit & Withdraw
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your crypto funding, instant deposits, and secure 2FA withdrawals.
+            Manage your crypto funding, instant deposits, and secure 2FA
+            withdrawals.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -180,7 +181,10 @@ function DepositWithdrawContent() {
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground flex items-center justify-between">
             <span>Ready for withdrawal or investment</span>
-            <Badge variant="secondary" className="bg-emerald-500/15 text-emerald-500 text-[10px]">
+            <Badge
+              variant="secondary"
+              className="bg-emerald-500/15 text-emerald-500 text-[10px]"
+            >
               Liquid
             </Badge>
           </CardContent>
@@ -201,7 +205,10 @@ function DepositWithdrawContent() {
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground flex items-center justify-between">
             <span>All time verified deposits</span>
-            <Badge variant="secondary" className="bg-accent-foreground/15 text-accent-foreground text-[10px]">
+            <Badge
+              variant="secondary"
+              className="bg-accent-foreground/15 text-accent-foreground text-[10px]"
+            >
               Verified
             </Badge>
           </CardContent>
@@ -222,7 +229,10 @@ function DepositWithdrawContent() {
           </CardHeader>
           <CardContent className="text-xs text-muted-foreground flex items-center justify-between">
             <span>Aggregated vault equivalence</span>
-            <Badge variant="secondary" className="bg-blue-500/15 text-blue-500 text-[10px]">
+            <Badge
+              variant="secondary"
+              className="bg-blue-500/15 text-blue-500 text-[10px]"
+            >
               Audited
             </Badge>
           </CardContent>
@@ -244,22 +254,29 @@ function DepositWithdrawContent() {
               Deposit Capital
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
-              Fund your account using instant crypto transfers (USDT, BTC, ETH, USDC) or manual fiat gateways.
+              Fund your account using instant crypto transfers (USDT, BTC, ETH,
+              USDC) or manual fiat gateways.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground py-1 border-b border-border/50">
                 <span>Supported Assets</span>
-                <span className="font-medium text-foreground">BTC, USDT, ETH, USDC, Bank</span>
+                <span className="font-medium text-foreground">
+                  BTC, USDT, ETH, USDC, Bank
+                </span>
               </div>
               <div className="flex items-center justify-between text-muted-foreground py-1 border-b border-border/50">
                 <span>Processing Time</span>
-                <span className="font-medium text-emerald-500">Automated Indexing (&lt; 3 mins)</span>
+                <span className="font-medium text-emerald-500">
+                  Automated Indexing (&lt; 3 mins)
+                </span>
               </div>
               <div className="flex items-center justify-between text-muted-foreground py-1">
                 <span>Platform Fee</span>
-                <span className="font-semibold text-emerald-500">0.00% (Free)</span>
+                <span className="font-semibold text-emerald-500">
+                  0.00% (Free)
+                </span>
               </div>
             </div>
 
@@ -286,22 +303,29 @@ function DepositWithdrawContent() {
               Withdraw Cash
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
-              Request payouts directly to your verified bank account, wire (SWIFT/SEPA), or external crypto wallet.
+              Request payouts directly to your verified bank account, wire
+              (SWIFT/SEPA), or external crypto wallet.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2 text-xs">
               <div className="flex items-center justify-between text-muted-foreground py-1 border-b border-border/50">
                 <span>Withdrawal Methods</span>
-                <span className="font-medium text-foreground">Bank, Wire, Crypto, PayPal</span>
+                <span className="font-medium text-foreground">
+                  Bank, Wire, Crypto, PayPal
+                </span>
               </div>
               <div className="flex items-center justify-between text-muted-foreground py-1 border-b border-border/50">
                 <span>Security Authorization</span>
-                <span className="font-medium text-foreground">2FA Authenticator Code</span>
+                <span className="font-medium text-foreground">
+                  2FA Authenticator Code
+                </span>
               </div>
               <div className="flex items-center justify-between text-muted-foreground py-1">
                 <span>Daily Limit</span>
-                <span className="font-semibold text-foreground">$50,000.00 USD</span>
+                <span className="font-semibold text-foreground">
+                  $50,000.00 USD
+                </span>
               </div>
             </div>
 
@@ -337,11 +361,19 @@ function DepositWithdrawContent() {
             <Table className="w-full text-left border-collapse select-none">
               <TableHeader>
                 <TableRow className="border-border/60">
-                  <TableHead className="text-xs font-semibold">Type & Asset</TableHead>
+                  <TableHead className="text-xs font-semibold">
+                    Type & Asset
+                  </TableHead>
                   <TableHead className="text-xs font-semibold">TxID</TableHead>
-                  <TableHead className="text-xs font-semibold text-right">Amount</TableHead>
-                  <TableHead className="text-xs font-semibold">Status</TableHead>
-                  <TableHead className="text-xs font-semibold text-right">Date</TableHead>
+                  <TableHead className="text-xs font-semibold text-right">
+                    Amount
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold">
+                    Status
+                  </TableHead>
+                  <TableHead className="text-xs font-semibold text-right">
+                    Date
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -367,7 +399,10 @@ function DepositWithdrawContent() {
                   ))
                 ) : transactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground text-xs">
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-8 text-muted-foreground text-xs"
+                    >
                       No funding transactions recorded yet.
                     </TableCell>
                   </TableRow>
@@ -382,7 +417,10 @@ function DepositWithdrawContent() {
                       : "N/A";
 
                     return (
-                      <TableRow key={tx.id} className="border-border/40 hover:bg-muted/30">
+                      <TableRow
+                        key={tx.id}
+                        className="border-border/40 hover:bg-muted/30"
+                      >
                         <TableCell className="py-3">
                           <div className="flex items-center gap-3">
                             <div
@@ -416,7 +454,8 @@ function DepositWithdrawContent() {
                             isDeposit ? "text-emerald-500" : "text-foreground"
                           }`}
                         >
-                          {isDeposit ? "+" : "-"}{formatFullCurrency(tx.amount)}
+                          {isDeposit ? "+" : "-"}
+                          {formatFullCurrency(tx.amount)}
                         </TableCell>
                         <TableCell className="py-3">
                           <Badge
@@ -453,15 +492,27 @@ function DepositWithdrawContent() {
       </Card>
 
       {/* ── Dialog Components ── */}
-      <DepositDialog open={isDepositOpen} onOpenChange={handleOpenChangeDeposit} />
-      <WithdrawDialog open={isWithdrawOpen} onOpenChange={handleOpenChangeWithdraw} />
+      <DepositDialog
+        open={isDepositOpen}
+        onOpenChange={handleOpenChangeDeposit}
+      />
+      <WithdrawDialog
+        open={isWithdrawOpen}
+        onOpenChange={handleOpenChangeWithdraw}
+      />
     </div>
   );
 }
 
 export default function DepositWithdrawPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-center text-sm text-muted-foreground">Loading wallet...</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 text-center text-sm text-muted-foreground">
+          Loading your wallet addresses...
+        </div>
+      }
+    >
       <DepositWithdrawContent />
     </Suspense>
   );

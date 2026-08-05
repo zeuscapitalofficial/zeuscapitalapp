@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         accept: "application/json",
         ...(apiKey ? { "x-cg-demo-api-key": apiKey } : {}),
       },
-      next: { revalidate: 60 }, // cache for 60s
+      next: { revalidate: 60 },
     });
 
     if (!res.ok) {

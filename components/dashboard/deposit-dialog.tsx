@@ -63,25 +63,25 @@ const CRYPTO_CONFIG: Record<
   btc: {
     address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
     network: "Bitcoin Native",
-    image: "/BTC.webp",
+    image: "/btc.jpg",
     priceUsd: 68500,
   },
   usdt: {
     address: "TYDzsYUEpvnYmQk4zGP9sWWcTEd2MiAtW6",
     network: "Binance Smart Chain",
-    image: "/USDT.webp",
+    image: "/usdt.jpg",
     priceUsd: 1.0,
   },
   eth: {
     address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
     network: "Ethereum (ERC-20)",
-    image: "/USDC.webp",
+    image: "/eth.jpg",
     priceUsd: 2100.0,
   },
   sol: {
     address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCN",
     network: "Solana",
-    image: "/SOL.webp",
+    image: "/sol.jpg",
     priceUsd: 95.0,
   },
 };

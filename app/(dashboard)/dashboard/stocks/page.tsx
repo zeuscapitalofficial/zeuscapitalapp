@@ -1282,7 +1282,7 @@ export default function StocksMarketsPage() {
           open={Boolean(buyingAsset)}
           onOpenChange={(o) => !o && setBuyingAsset(null)}
         >
-          <DialogContent className="max-w-[440px] bg-card border-border">
+          <DialogContent className="max-w-110 bg-card border-border">
             <DialogHeader>
               <DialogTitle className="text-base font-bold text-foreground flex items-center gap-2">
                 <ShoppingBag className="size-4 text-emerald-500" />

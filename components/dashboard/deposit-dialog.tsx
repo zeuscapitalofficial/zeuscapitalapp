@@ -44,8 +44,8 @@ export interface DepositDialogProps {
 
 const PAYMENT_METHODS = [
   { id: "btc", label: "Bitcoin", symbol: "BTC", type: "crypto" },
-  { id: "usdt", label: "Tether (USDT)", symbol: "USDT", type: "crypto" },
   { id: "eth", label: "Ethereum", symbol: "ETH", type: "crypto" },
+  { id: "usdt", label: "Tether (USDT)", symbol: "USDT", type: "crypto" },
   { id: "sol", label: "Solana", symbol: "SOL", type: "crypto" },
   { id: "bank", label: "Bank Wire Transfer", symbol: "USD", type: "manual" },
   { id: "card", label: "Credit / Debit Card", symbol: "USD", type: "manual" },
@@ -61,25 +61,25 @@ const CRYPTO_CONFIG: Record<
   }
 > = {
   btc: {
-    address: "bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh",
+    address: "bc1qdmxj7eu6ah0ezusnkw2z372ae70qukz5caqqfz",
     network: "Bitcoin Native",
     image: "/btc.jpeg",
     priceUsd: 68500,
   },
-  usdt: {
-    address: "TYDzsYUEpvnYmQk4zGP9sWWcTEd2MiAtW6",
-    network: "Binance Smart Chain",
-    image: "/usdt.jpeg",
-    priceUsd: 1.0,
-  },
   eth: {
-    address: "0x71C7656EC7ab88b098defB751B7401B5f6d8976F",
+    address: "0x3BE538a551E3ce329b81FcCb8F560f32Cdbe1dbA",
     network: "Ethereum (ERC-20)",
     image: "/eth.jpeg",
     priceUsd: 2100.0,
   },
+  usdt: {
+    address: "0x3BE538a551E3ce329b81FcCb8F560f32Cdbe1dbA",
+    network: "Binance Smart Chain",
+    image: "/usdt.jpeg",
+    priceUsd: 1.0,
+  },
   sol: {
-    address: "4k3Dyjzvzp8eMZWUXbBCjEvwSkkk59S5iCN",
+    address: "CfQ7JhLaJ2SCmuzyaQLa1my6wHaHarVhxZUkbAmnpwFZ",
     network: "Solana",
     image: "/sol.jpeg",
     priceUsd: 95.0,

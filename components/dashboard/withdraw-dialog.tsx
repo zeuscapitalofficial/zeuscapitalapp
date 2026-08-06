@@ -170,7 +170,7 @@ export function WithdrawDialog({
         onOpenChange?.(val);
       }}>
       {trigger && <DialogTrigger render={trigger as React.ReactElement} />}
-        <DialogContent className="max-w-2xl md:max-w-120 bg-card border-border max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-120 bg-card border-border max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <div className="flex items-center gap-2.5">
               <div className="size-9 rounded-lg bg-accent-foreground/10 text-accent-foreground flex items-center justify-center shrink-0">

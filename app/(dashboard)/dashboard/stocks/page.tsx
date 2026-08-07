@@ -1,25 +1,16 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Coins,
-  DollarSign,
-  Globe,
-  Loader2,
-  Search,
-  ShoppingBag,
-  TrendingUp,
-} from "lucide-react";
-import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -29,15 +20,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import Link from "next/link";
 import CurrencyFormatter from "@/lib/currency-formatter";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Search,
+  ShoppingBag,
+} from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import {
+  formatCompactCurrency,
+  formatFullCurrency,
+} from "@/components/formatter";
 
 interface MarketAsset {
   id: string;
@@ -1381,7 +1381,7 @@ export default function StocksMarketsPage() {
                         : "bg-muted/50 border-border text-muted-foreground hover:text-foreground"
                     }`}
                   >
-                    ${amt}
+                    {formatFullCurrency(parseFloat(amt) || 0)}
                   </button>
                 ))}
               </div>

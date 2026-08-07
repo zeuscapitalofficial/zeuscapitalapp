@@ -454,7 +454,7 @@ export default function DashboardPage() {
       {/* Replaced Transactions Table with Two Columns: Top Coins & Refer Section */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-md items-stretch">
         {/* Top Coins Card (8 cols) */}
-        <Card className="lg:col-span-8 h-[400px] overflow-hidden">
+        <Card className="lg:col-span-8 h-100 overflow-hidden">
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
               <CardTitle>Top Cryptocurrency Indices</CardTitle>

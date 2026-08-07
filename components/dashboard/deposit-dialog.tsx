@@ -144,8 +144,8 @@ export function DepositDialog({
     e.preventDefault();
 
     const numAmount = Number(usdAmount);
-    if (!usdAmount || isNaN(numAmount) || numAmount < 50) {
-      toast.error("Minimum deposit amount is $50 USD.");
+    if (!usdAmount || isNaN(numAmount) || numAmount < 1000) {
+      toast.error("Minimum deposit amount is $1000 USD.");
       return;
     }
 
@@ -217,7 +217,7 @@ export function DepositDialog({
                 Deposit Amount (USD) <span className="text-rose-500">*</span>
               </Label>
               <span className="text-muted-foreground text-[11px]">
-                Min Deposit: $50 USD
+                Min Deposit: $1000 USD
               </span>
             </div>
             <div className="relative">
@@ -227,9 +227,9 @@ export function DepositDialog({
               <Input
                 id="deposit-usd-amount"
                 type="number"
-                min={50}
+                min={1000}
                 disabled={isAmountDisabled || submitting}
-                placeholder="500.00"
+                placeholder="1000.00"
                 value={usdAmount}
                 onChange={(e) => setUsdAmount(e.target.value)}
                 className="pl-7 h-10 font-bold text-sm bg-background border-border text-foreground"

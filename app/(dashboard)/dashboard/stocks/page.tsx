@@ -1329,7 +1329,7 @@ export default function StocksMarketsPage() {
               </div>
 
               {/* Investment Amount */}
-              <div className=" flex space-y-1.5">
+              <div className=" flex flex-col space-y-1.5">
                 <label className="text-xs mb-2 font-semibold text-foreground">
                   Investment Amount (USD)
                 </label>
@@ -1360,7 +1360,7 @@ export default function StocksMarketsPage() {
                     })}
                   </span>
                 </div>
-                <div className="flex justify-between font-bold text-foreground text-sm pt-1 border-t border-border/50">
+                <div className="flex justify-between font-medium text-foreground text-sm pt-1 border-t border-border/50">
                   <span>Exact Purchased Asset Value:</span>
                   <span className="text-emerald-500">
                     ${(parseFloat(purchaseAmountUsd) || 0).toFixed(2)} USD
@@ -1370,7 +1370,7 @@ export default function StocksMarketsPage() {
 
               {/* Quick Amount Selector Chips */}
               <div className="flex gap-2">
-                {["1,000", "2,000", "5,000", "10,000", "50,000"].map((amt) => (
+                {["1000", "2000", "5000", "10000", "50000"].map((amt) => (
                   <button
                     key={amt}
                     type="button"

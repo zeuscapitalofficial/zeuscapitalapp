@@ -1330,7 +1330,7 @@ export default function StocksMarketsPage() {
 
               {/* Investment Amount */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">
+                <label className="text-xs mb-2 font-semibold text-foreground">
                   Investment Amount (USD)
                 </label>
                 <div className="relative">
@@ -1339,11 +1339,11 @@ export default function StocksMarketsPage() {
                   </span>
                   <Input
                     type="number"
-                    min="1"
+                    min="1000"
                     step="5"
                     value={purchaseAmountUsd}
                     onChange={(e) => setPurchaseAmountUsd(e.target.value)}
-                    className="pl-7 h-10 text-sm font-mono bg-background font-bold text-foreground"
+                    className="pl-7 h-10 text-sm font-mono bg-background font-bold text-foreground hide-spinner"
                     placeholder="Enter amount in USD"
                   />
                 </div>
@@ -1370,7 +1370,7 @@ export default function StocksMarketsPage() {
 
               {/* Quick Amount Selector Chips */}
               <div className="flex gap-2">
-                {["10", "50", "100", "250", "500"].map((amt) => (
+                {["1,000", "2,000", "5,000", "10,000", "50,000"].map((amt) => (
                   <button
                     key={amt}
                     type="button"

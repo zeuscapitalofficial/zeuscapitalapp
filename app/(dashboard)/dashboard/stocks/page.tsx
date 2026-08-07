@@ -1329,7 +1329,7 @@ export default function StocksMarketsPage() {
               </div>
 
               {/* Investment Amount */}
-              <div className="space-y-1.5">
+              <div className=" flex space-y-1.5">
                 <label className="text-xs mb-2 font-semibold text-foreground">
                   Investment Amount (USD)
                 </label>

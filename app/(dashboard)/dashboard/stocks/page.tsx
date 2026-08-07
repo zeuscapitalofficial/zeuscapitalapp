@@ -931,7 +931,7 @@ export default function StocksMarketsPage() {
     if (!buyingAsset) return;
 
     const usdVal = parseFloat(purchaseAmountUsd);
-    if (!usdVal || usdVal <= 1000) {
+    if (!usdVal || usdVal <= 999) {
       toast.error("Please enter a valid investment amount");
       return;
     }

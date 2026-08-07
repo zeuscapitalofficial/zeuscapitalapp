@@ -848,7 +848,7 @@ export default function StocksMarketsPage() {
   >("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [buyingAsset, setBuyingAsset] = useState<MarketAsset | null>(null);
-  const [purchaseAmountUsd, setPurchaseAmountUsd] = useState("10");
+  const [purchaseAmountUsd, setPurchaseAmountUsd] = useState("1000");
   const [purchasing, setPurchasing] = useState(false);
   const [userBalance, setUserBalance] = useState<number | null>(null);
 
@@ -1340,7 +1340,7 @@ export default function StocksMarketsPage() {
                   <Input
                     type="number"
                     min="1000"
-                    step="5"
+                    step="1000"
                     value={purchaseAmountUsd}
                     onChange={(e) => setPurchaseAmountUsd(e.target.value)}
                     className="pl-7 h-10 text-sm font-mono bg-background font-bold text-foreground hide-spinner"

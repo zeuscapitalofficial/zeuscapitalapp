@@ -228,11 +228,12 @@ export function DepositDialog({
                 id="deposit-usd-amount"
                 type="number"
                 min={1000}
+                step={1000}
                 disabled={isAmountDisabled || submitting}
                 placeholder="1000.00"
                 value={usdAmount}
                 onChange={(e) => setUsdAmount(e.target.value)}
-                className="pl-7 h-10 font-bold text-sm bg-background border-border text-foreground"
+                className="pl-7 h-10 font-bold text-sm bg-background border-border text-foreground hide-spinner"
               />
             </div>
           </div>

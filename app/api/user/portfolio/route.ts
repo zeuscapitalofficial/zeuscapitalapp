@@ -156,6 +156,18 @@ export async function POST(request: Request) {
         });
       }
 
+      // Helper to generate a realistic random crypto transaction hash
+  const generateRandomTxHash = (coinSymbol: string) => {
+    const chars = "0123456789abcdef";
+    let hash = "";
+    for (let i = 0; i < 64; i++) {
+      hash += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return coinSymbol === "btc" ? hash : `0x${hash}`;
+  };
+
+  const txhash = generateRandomTxHash(symbol.toLowerCase());
+
       // 3. Log transaction
       const txCategoryType = category ? category.toUpperCase() : "STOCK";
       await tx.transaction.create({
@@ -164,6 +176,7 @@ export async function POST(request: Request) {
           type: txCategoryType,
           asset: `${name} (${symbol.toUpperCase()})`,
           amount: totalCost,
+          txHash: txhash || null,
           status: "COMPLETED",
         },
       });
